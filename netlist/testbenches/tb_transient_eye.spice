@@ -1,0 +1,62 @@
+* ==============================================================================
+* SMACD 2027: Large-Signal Transient PRBS Eye Diagram Testbench
+* Circuit: 20-Gbps SiGe-BiCMOS Optical TIA (IHP SG13G2)
+* SPDX-License-Identifier: Apache-2.0
+* ==============================================================================
+
+.include ../tia_top.spice
+
+* Power Supplies
+VDD VDD 0 DC 2.5
+VSS VSS 0 DC 0.0
+
+* 20 Gbps (bit period Tb = 50 ps, tr = tf = 10 ps) PRBS-7 Current Input Source
+* Simulating photodiode current pulse sequence: Peak current 200 uA
+IIN 0 IN_PAD PWL(
++ 0ps 0u
++ 10ps 200u  50ps 200u
++ 60ps 0u    100ps 0u
++ 110ps 200u 200ps 200u
++ 210ps 0u   250ps 0u
++ 260ps 200u 300ps 200u
++ 310ps 0u   400ps 0u
++ 410ps 200u 450ps 200u
++ 460ps 0u   500ps 0u
++ 510ps 200u 650ps 200u
++ 660ps 0u   700ps 0u
++ 710ps 200u 750ps 200u
++ 760ps 0u   900ps 0u
++ 910ps 200u 1050ps 200u
++ 1060ps 0u  1150ps 0u
++ 1160ps 200u 1200ps 200u
++ 1210ps 0u  1250ps 0u
++ 1260ps 200u 1400ps 200u
++ 1410ps 0u  1500ps 0u
++ 1510ps 200u 1550ps 200u
++ 1560ps 0u  1600ps 0u
++ 1610ps 200u 1750ps 200u
++ 1760ps 0u  1800ps 0u
++ 1810ps 200u 1900ps 200u
++ 1910ps 0u  2000ps 0u
++ )
+
+CPD IN_PAD 0 40f
+
+* Top-Level DUT
+XDUT IN_PAD OUT_P OUT_N VDD VSS tia_top
+
+* External 50-Ohm Loads
+RLOAD_P OUT_P 0 50
+RLOAD_N OUT_N 0 50
+
+* Transient Simulation (2000 ps total duration, 1 ps max timestep)
+.tran 1p 2000p 0p 1p
+
+.control
+run
+let v_diff = v(out_p) - v(out_n)
+write tb_transient_eye.raw v_diff v(in_pad) time
+quit
+.endc
+
+.end

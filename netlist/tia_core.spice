@@ -1,0 +1,46 @@
+* ==============================================================================
+* SMACD 2027 Open-Source Design Challenge
+* Circuit: 20-Gbps SiGe-BiCMOS Optical Transimpedance Amplifier Core
+* Technology: IHP SG13G2 130nm SiGe BiCMOS (fT = 300 GHz)
+* SPDX-License-Identifier: Apache-2.0
+* ==============================================================================
+
+.subckt tia_core IN OUT VDD VSS VBIAS_P VBIAS_N IDC_CANCEL
+* IN: Input node from photodiode / pad
+* OUT: Transimpedance amplifier output node
+* VDD: 2.5V Analog Supply
+* VSS: 0V Ground
+* VBIAS_P, VBIAS_N: Bias voltages
+* IDC_CANCEL: Feedback current from DCOC loop
+
+* ------------------------------------------------------------------------------
+* Input Common-Emitter Stage with Active Feedback
+* Q1 is sized with Nx=2 for optimal noise and bandwidth (Ic1 ~ 2.5 mA)
+* ------------------------------------------------------------------------------
+XQ1 C1 IN E1 VSS npn13G2 Nx=2
+RE1 E1 VSS rsil w=1.0u l=2.0u
+
+* Collector Load Resistor RC1 (rhigh, 300 Ohms)
+XRC1 VDD C1 VSS rhigh w=1.0u l=4.5u
+
+* ------------------------------------------------------------------------------
+* Emitter Follower Buffer Stage (Q2)
+* Drives the feedback network RF and isolating output capacitance
+* ------------------------------------------------------------------------------
+XQ2 VDD C1 E2 VSS npn13G2 Nx=3
+XIEE2 E2 VSS VSS VSS sg13_lv_nmos w=15u l=0.5u ng=2
+
+* ------------------------------------------------------------------------------
+* Shunt-Feedback Network (RF = 1.25 kOhm) with Peaking Capacitor CF
+* ------------------------------------------------------------------------------
+XRF E2 IN VSS rhigh w=0.5u l=9.5u
+XCF E2 IN cap_cmim w=2.5u l=2.5u
+
+* ------------------------------------------------------------------------------
+* Output decoupling to OUT
+* ------------------------------------------------------------------------------
+R_OUT E2 OUT 10
+* DCOC Current injection to input node IN
+R_DCOC IDC_CANCEL IN 50
+
+.ends tia_core

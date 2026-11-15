@@ -1,0 +1,77 @@
+* ==============================================================================
+* SMACD 2027 Open-Source Design Challenge
+* Circuit: Top-Level 20-Gbps SiGe-BiCMOS Optical Front-End with DCOC
+* Technology: IHP SG13G2 130nm SiGe BiCMOS (fT = 300 GHz)
+* SPDX-License-Identifier: Apache-2.0
+* ==============================================================================
+
+.include ../ihp_pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerHBT.lib
+.include ../ihp_pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerMOSlv.lib
+.include ../ihp_pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerRES.lib
+.include ../ihp_pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerCAP.lib
+
+.include tia_core.spice
+.include dcoc_servo.spice
+.include output_buffer.spice
+
+.subckt tia_top IN_PAD OUT_P_PAD OUT_N_PAD VDD VSS
+* IN_PAD: High-speed optical input pad (connected to photodiode anode/cathode)
+* OUT_P_PAD, OUT_N_PAD: Differential 50-Ohm GSG output pads
+* VDD: 2.5V System Supply
+* VSS: Ground (0V)
+
+* ------------------------------------------------------------------------------
+* On-Chip Bias Generator Network
+* Generates VBIAS_P (PMOS mirror), VBIAS_N (NMOS current sources), VBIAS_OTA, VBIAS_BUF
+* ------------------------------------------------------------------------------
+* Master bias current branch with high-value resistor
+XR_BIAS VDD V_BIAS_REF VSS rhigh w=1.0u l=20.0u
+XM_BIAS_REF V_BIAS_REF V_BIAS_REF VSS VSS sg13_lv_nmos w=10u l=0.5u ng=2
+
+* Current mirror distribution
+XM_MIRR_BUF VBIAS_BUF V_BIAS_REF VSS VSS sg13_lv_nmos w=10u l=0.5u ng=2
+XM_MIRR_OTA VBIAS_OTA V_BIAS_REF VSS VSS sg13_lv_nmos w=5u l=1.0u ng=1
+XM_MIRR_N VBIAS_N V_BIAS_REF VSS VSS sg13_lv_nmos w=10u l=0.5u ng=2
+XM_MIRR_P VBIAS_P V_BIAS_REF VSS VSS sg13_lv_pmos w=10u l=0.5u ng=2
+
+* ------------------------------------------------------------------------------
+* Input Bondpad & ESD Protection Network
+* Sg13g2 ESD diodes and bondpad parasitics
+* ------------------------------------------------------------------------------
+* Input pad parasitic model (Cp ~ 25 fF, Rp ~ 1.5 Ohm)
+R_PAD_IN IN_PAD IN_INT 1.5
+C_PAD_IN IN_INT VSS 25f
+
+* ESD clamp diodes for HBT base protection
+D_ESD_DN VSS IN_INT dschottky_nbl1_mod Area=4p
+D_ESD_UP IN_INT VDD dschottky_nbl1_mod Area=4p
+
+* ------------------------------------------------------------------------------
+* Main TIA Core Stage
+* ------------------------------------------------------------------------------
+XTIA_CORE IN_INT OUT_TIA VDD VSS VBIAS_P VBIAS_N I_DCOC tia_core
+
+* ------------------------------------------------------------------------------
+* Dummy Replica TIA Stage (Equal DC bias, isolated from AC input)
+* Provides reference voltage for differential DCOC and output buffer
+* ------------------------------------------------------------------------------
+C_REP_AC IN_REP VSS 65f
+XTIA_REPLICA IN_REP OUT_REP VDD VSS VBIAS_P VBIAS_N VSS tia_core
+
+* ------------------------------------------------------------------------------
+* Active DC-Offset Cancellation (DCOC) Loop
+* ------------------------------------------------------------------------------
+XDCOC OUT_TIA OUT_REP I_DCOC VDD VSS VBIAS_OTA dcoc_servo
+
+* ------------------------------------------------------------------------------
+* 50-Ohm Matched CML Output Driver Buffer
+* ------------------------------------------------------------------------------
+XBUF OUT_TIA OUT_REP OUT_P_INT OUT_N_INT VDD VSS VBIAS_BUF output_buffer
+
+* Output GSG Pad Models (Cp ~ 30 fF, Rp ~ 1.0 Ohm)
+R_PAD_OUTP OUT_P_INT OUT_P_PAD 1.0
+C_PAD_OUTP OUT_P_PAD VSS 30f
+R_PAD_OUTN OUT_N_INT OUT_N_PAD 1.0
+C_PAD_OUTN OUT_N_PAD VSS 30f
+
+.ends tia_top

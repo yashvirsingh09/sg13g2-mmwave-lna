@@ -1,0 +1,15 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# External PDK checkout (fetched automatically in CI / setup)
+ihp_pdk/
+
+# SPICE raw simulation dumps
+*.raw
+*.log
+
+# OS generated
+.DS_Store
+Thumbs.db

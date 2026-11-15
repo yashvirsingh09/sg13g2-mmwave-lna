@@ -1,0 +1,39 @@
+* ==============================================================================
+* SMACD 2027: AC Transimpedance Gain & Bandwidth Testbench
+* Circuit: 20-Gbps SiGe-BiCMOS Optical TIA (IHP SG13G2)
+* SPDX-License-Identifier: Apache-2.0
+* ==============================================================================
+
+.include ../tia_top.spice
+
+* Power Supplies
+VDD VDD 0 DC 2.5
+VSS VSS 0 DC 0.0
+
+* Input Current Source (Photodiode Model: I_AC = 1 uA, C_PD = 40 fF)
+IIN 0 IN_PAD DC 0 AC 1u
+CPD IN_PAD 0 40f
+
+* Top-Level Device Under Test (DUT)
+XDUT IN_PAD OUT_P OUT_N VDD VSS tia_top
+
+* External 50-Ohm Loads (Sampling Oscilloscope / Vector Network Analyzer Ports)
+RLOAD_P OUT_P 0 50
+RLOAD_N OUT_N 0 50
+
+* AC Simulation Directive (10 MHz to 40 GHz, 50 points per decade)
+.ac dec 50 10meg 40g
+
+.control
+run
+* Transimpedance Gain: ZT = V(OUT_P, OUT_N) / I(IIN)
+let zt_mag = abs(v(out_p, out_n) / 1e-6)
+let zt_db = 20 * log10(zt_mag)
+let zt_phase = phase(v(out_p, out_n)) * 180 / 3.14159265
+
+* Save AC simulation data to raw format
+write tb_ac_gain.raw zt_db zt_phase frequency
+quit
+.endc
+
+.end

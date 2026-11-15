@@ -1,0 +1,21 @@
+================================================================================
+          SMACD 2027 Open-Source Design Challenge: DRC Verification Report       
+================================================================================
+Design Name    : tia_top
+Technology     : IHP SG13G2 (130 nm SiGe BiCMOS)
+PDK Commit     : e73adb4045731ddec21634146d536380057f6a26
+DRC Rule Deck  : ihp-sg13g2.drc
+GDS Layout     : D:\Smacd Hackathon\gds\tia_top.gds
+Execution Time : 45.9 seconds
+Timestamp (UTC): 2026-11-15T16:36:07.638625+00:00
+--------------------------------------------------------------------------------
+DRC Status Summary:
+  [PASS] Metal & Interconnect Rules: Clean
+  [PASS] Active & Poly Gate Rules   : Clean
+  [PASS] SiGe HBT Core Devices      : Clean (npn13G2 foundry primitive)
+  [PASS] MIM Capacitors & Resistors : Clean (cmim, rhigh, rsil)
+  [PASS] Pad & ESD Spacing Rules    : Clean (GSG RF configuration)
+  [PASS] Die Dimensions & Boundary  : 800 um x 600 um (0.48 mm^2 <= 5 mm^2)
+--------------------------------------------------------------------------------
+OVERALL STATUS: DRC CLEAN / COMPLIANT WITH IHP SG13G2 FOUNDRY RULES
+================================================================================

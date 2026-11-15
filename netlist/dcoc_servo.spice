@@ -1,0 +1,41 @@
+* ==============================================================================
+* SMACD 2027 Open-Source Design Challenge
+* Circuit: Active DC-Offset Cancellation (DCOC) Servo Loop
+* Technology: IHP SG13G2 130nm SiGe BiCMOS
+* SPDX-License-Identifier: Apache-2.0
+* ==============================================================================
+
+.subckt dcoc_servo OUT_TIA OUT_REP IDC_CANCEL VDD VSS VBIAS_OTA
+* OUT_TIA: Main TIA output voltage
+* OUT_REP: Replica TIA reference output voltage
+* IDC_CANCEL: Feedback cancellation current injected to input node IN
+* VDD: 2.5V Supply
+* VSS: Ground
+* VBIAS_OTA: Bias voltage for OTA tail current
+
+* ------------------------------------------------------------------------------
+* Low-Transconductance Operational Transconductance Amplifier (OTA)
+* Differential PMOS pair M1-M2 with active NMOS mirror M3-M4
+* ------------------------------------------------------------------------------
+XOTA_TAIL V_TAIL VBIAS_OTA VDD VDD sg13_lv_pmos w=10u l=1.0u ng=1
+XM1 D1 OUT_TIA V_TAIL VDD sg13_lv_pmos w=8u l=1.0u ng=1
+XM2 D2 OUT_REP V_TAIL VDD sg13_lv_pmos w=8u l=1.0u ng=1
+
+XM3 D1 D1 VSS VSS sg13_lv_nmos w=4u l=1.0u ng=1
+XM4 D2 D1 VSS VSS sg13_lv_nmos w=4u l=1.0u ng=1
+
+* ------------------------------------------------------------------------------
+* Low-Pass Loop Filter Integration Network
+* Large on-chip MIM capacitor (C_INT ~ 8 pF) with high-value poly resistor (R_INT ~ 500 kOhm)
+* Sets lower -3dB cutoff frequency to < 50 kHz for PRBS pattern compliance
+* ------------------------------------------------------------------------------
+XR_INT D2 V_CTRL VSS rhigh w=0.5u l=40u
+XC_INT V_CTRL VSS cap_cmim w=70u l=70u
+
+* ------------------------------------------------------------------------------
+* Cancellation Current Driver Transistor (M_CANCEL)
+* Sinks DC current from the TIA input node proportionally to integrated offset
+* ------------------------------------------------------------------------------
+XM_CANCEL IDC_CANCEL V_CTRL VSS VSS sg13_lv_nmos w=12u l=0.5u ng=2
+
+.ends dcoc_servo
