@@ -1,0 +1,43 @@
+* ==============================================================================
+* SMACD 2027 Open-Source Design Challenge
+* Circuit: Stage 1 Noise-Optimized Cascode (24-28 GHz LNA)
+* Technology: IHP SG13G2 130nm SiGe BiCMOS (fT = 300 GHz)
+* SPDX-License-Identifier: Apache-2.0
+* ==============================================================================
+
+.subckt lna_stage1 RF_IN STAGE1_OUT VCC GND VBIAS_B1 VBIAS_C1
+* RF_IN: 50-Ohm matched RF input from base inductor Lg1
+* STAGE1_OUT: Output to interstage matching network
+* VCC: 1.8V Analog Supply
+* GND: 0V Ground
+* VBIAS_B1: DC bias voltage for Q1 base (~0.88V)
+* VBIAS_C1: DC bias voltage for Q2 cascode base (~1.65V)
+
+* ------------------------------------------------------------------------------
+* Input Common-Emitter HBT Q1 (npn13G2, Nx=2)
+* Biased at Ic1 = 2.8 mA for minimum noise measure (Fmin) at 28 GHz
+* ------------------------------------------------------------------------------
+XQ1 C1 B1 E1 GND npn13G2 Nx=2
+
+* RF Choke / DC Bias Feed to Q1 Base via high-value resistor
+XR_B1 VBIAS_B1 B1 GND rhigh w=0.5u l=8.0u
+* AC Coupling from RF_IN
+X_CIN RF_IN B1 cap_cmim w=12u l=12u
+
+* ------------------------------------------------------------------------------
+* Emitter Degeneration Inductor Le1 (21.6 pH)
+* Synthesizes the real 50-Ohm input resistance term (gm1 * Le1 / Cpi1)
+* ------------------------------------------------------------------------------
+L_E1 E1 GND 21.6p Rser=0.08
+
+* ------------------------------------------------------------------------------
+* Common-Base Cascode HBT Q2 (npn13G2, Nx=2)
+* Suppresses Miller feedback (Cmu1), boosts S12 isolation to < -38 dB
+* ------------------------------------------------------------------------------
+XQ2 STAGE1_OUT B2 C1 GND npn13G2 Nx=2
+
+* Base bypass capacitor for Q2 (CB_BYPASS = 1.5 pF to RF ground)
+XC_B2 B2 GND cap_cmim w=32u l=32u
+XR_B2 VBIAS_C1 B2 GND rhigh w=0.5u l=5.0u
+
+.ends lna_stage1

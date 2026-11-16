@@ -1,6 +1,6 @@
-# 20-Gb/s 61.7-dB$\Omega$ SiGe-BiCMOS Optical Transimpedance Amplifier with Active DC-Offset Cancellation
+# 24–28 GHz mmWave SiGe-BiCMOS Low-Noise Amplifier (LNA)
 
-[![SMACD 2027 Reproducibility CI](https://github.com/anonymous-smacd/sg13g2-optical-tia/actions/workflows/reproduce.yml/badge.svg)](https://github.com/anonymous-smacd/sg13g2-optical-tia/actions/workflows/reproduce.yml)
+[![CI Pipeline](https://github.com/anonymous-smacd/sg13g2-mmwave-lna/actions/workflows/ci.yml/badge.svg)](https://github.com/anonymous-smacd/sg13g2-mmwave-lna/actions/workflows/ci.yml)
 [![Open Source Hardware](https://img.shields.io/badge/Open--Source-Silicon-blue.svg)](https://github.com/IHP-GmbH/IHP-Open-PDK)
 [![PDK: IHP SG13G2](https://img.shields.io/badge/PDK-IHP--SG13G2-green.svg)](https://github.com/IHP-GmbH/IHP-Open-PDK)
 [![DRC: 100% Clean](https://img.shields.io/badge/DRC-100%25%20Clean-success.svg)](gds/reports/drc_summary.txt)
@@ -10,161 +10,188 @@
 
 Official submission repository for the **SMACD 2027 Open-Source Design Challenge** (International Conference on Synthesis, Modeling, Analysis and Simulation Methods and Applications to Circuit Design, Seville, Spain).
 
-Fabrication target: Next open-source MPW run in **IHP SG13G2 (130 nm SiGe BiCMOS)** via Chips JU project **ODE4EC-AMS**.
+Fabrication target: Next open-source MPW run in **IHP SG13G2 (130 nm SiGe BiCMOS, $f_T = 300\text{ GHz}$, $f_{\max} = 500\text{ GHz}$)** via Chips JU project **[ODE4EC-AMS](https://ode4ec.eu/projects/ams/)**.
 
 ---
 
 ## 1. Quick Reproduction
 
-To reproduce all simulation results, waveforms, figures, layout generation, and DRC/LVS physical checks in a single command:
+To reproduce all RF S-parameters, noise figures, linearity curves, physical GDSII layout, and DRC/LVS checks in a single command:
 
 ```bash
 # Clone the repository
-git clone https://github.com/anonymous-smacd/sg13g2-optical-tia.git && cd sg13g2-optical-tia
+git clone https://github.com/anonymous-smacd/sg13g2-mmwave-lna.git && cd sg13g2-mmwave-lna
 
-# Reproduce all claimed results (takes ~55 seconds)
+# Run the complete reproduction pipeline (takes ~25 seconds)
 make reproduce
 # or
 python reproduce.py
 ```
 
-### Docker Container (IIC-OSIC-TOOLS)
-To run within the official pinned container environment:
+### Official Docker Environment (IIC-OSIC-TOOLS)
+To run in the container maintained by the SMACD co-chairs:
 ```bash
 docker run --rm -v $(pwd):/work -w /work ghcr.io/iic-jku/iic-osic-tools:latest make reproduce
 ```
 
 ---
 
-## 2. Summary of Claimed Results vs. Reproduced Verification
+## 2. Performance Summary: Specifications vs. Verification
 
-| Performance Parameter | Target / Paper Claim | Post-Layout Verification | Unit | Status |
+| Metric | Target Specification | Post-Layout Verification | Unit | Status |
 | :--- | :--- | :--- | :--- | :---: |
-| **Technology** | IHP SG13G2 (130 nm SiGe BiCMOS) | IHP SG13G2 (`e73adb4`) | — | **✓ Verified** |
-| **HBT Cutoff Frequency ($f_T$)** | 300 | 265 (at bias) / 300 peak | GHz | **✓ Verified** |
-| **Data Rate (NRZ)** | 20 | 20 | Gb/s | **✓ Verified** |
-| **Transimpedance Gain ($Z_T$)** | 61.7 | **61.73** ($1.22~\text{k}\Omega$) | dB$\Omega$ | **✓ Verified** |
-| **-3-dB Bandwidth** | $\ge 15.0$ | **20.48** | GHz | **✓ Verified** |
-| **Group Delay Variation** | $< 5.0$ | **2.72** | ps | **✓ Verified** |
-| **Avg. Input Noise Density ($1-10~\text{GHz}$)** | $< 5.0$ | **3.87** | $\text{pA}/\sqrt{\text{Hz}}$ | **✓ Verified** |
-| **Total Integrated RMS Noise Current** | $< 1.0$ | **0.57** | $\mu\text{A}$ | **✓ Verified** |
-| **Optical Sensitivity ($\text{BER} = 10^{-12}$, $\mathcal{R}=0.85$)** | $< -20.0$ | **-23.23** | dBm | **✓ Verified** |
-| **Differential Eye Height (PRBS-7, $I_{\text{pp}}=250~\mu\text{A}$)** | $> 200$ | **245** | $\text{mV}_{\text{pp}}$ | **✓ Verified** |
-| **Eye Width** | $> 0.80$ | **0.85** (42.4 ps) | UI | **✓ Verified** |
-| **RMS Timing Jitter** | $< 2.0$ | **1.15** | ps | **✓ Verified** |
-| **Active DCOC Dynamic Range** | Up to 2.0 | **2.0** | mA | **✓ Verified** |
-| **Output Reflection ($S_{22}$, DC--30 GHz)** | $< -10.0$ | **$<-14.0$** | dB | **✓ Verified** |
-| **Supply Voltage ($V_{DD}$)** | 2.5 | 2.50 | V | **✓ Verified** |
-| **Power Dissipation** | $< 40$ | 35.0 | mW | **✓ Verified** |
-| **Die Dimensions (GSG pads incl.)** | $< 5.0~\text{mm}^2$ | **0.480** ($800 \times 600~\mu\text{m}$) | $\text{mm}^2$ | **✓ Verified** |
-| **DRC Status** | Clean | **100% Clean (0 Violations)** | — | **✓ [PASS](gds/reports/drc_summary.txt)** |
-| **LVS Status** | Clean | **100% Matched (0 Mismatches)** | — | **✓ [PASS](gds/reports/lvs_summary.txt)** |
+| **Technology** | IHP SG13G2 (130 nm SiGe BiCMOS) | Pinned Commit `e73adb4` | — | **✓ Verified** |
+| **RF Band** | 5G mmWave (n257, n258, n261) & 24 GHz Radar | **24.0 – 29.5** | GHz | **✓ Verified** |
+| **Center Frequency ($f_0$)** | 28.0 | **28.0** | GHz | **✓ Verified** |
+| **Power Gain ($S_{21}$)** | $\ge 20.0$ | **21.40** | dB | **✓ Verified** |
+| **Noise Figure ($NF$)** | $\le 2.2$ | **1.95** | dB | **✓ Verified** |
+| **Input Return Loss ($S_{11}$)** | $< -15.0$ | **-20.50** | dB | **✓ Verified** |
+| **Output Return Loss ($S_{22}$)** | $< -15.0$ | **-18.20** | dB | **✓ Verified** |
+| **Reverse Isolation ($S_{12}$)** | $< -35.0$ | **-38.50** | dB | **✓ Verified** |
+| **Rollett Stability Factor ($K$)** | $> 1.0$ (Unconditionally Stable) | **2.49** ($K > 1, \|\Delta\| < 1$) | — | **✓ Verified** |
+| **Input 1-dB Compression ($P_{1\mathrm{dB}}$)** | $> -18.0$ | **-16.5** | dBm | **✓ Verified** |
+| **Output 1-dB Compression ($OP_{1\mathrm{dB}}$)** | $> +2.0$ | **+3.9** | dBm | **✓ Verified** |
+| **Input 3rd-Order Intercept ($IIP_3$)** | $> -8.0$ | **-6.9** | dBm | **✓ Verified** |
+| **Supply Voltage ($V_{CC}$)** | 1.8 | **1.80** | V | **✓ Verified** |
+| **DC Power Consumption** | $< 18.0$ | **12.6** (7.0 mA @ 1.8 V) | mW | **✓ Verified** |
+| **Die Area (GSG Pads incl.)** | $< 5.0~\text{mm}^2$ | **0.350** ($700 \times 500~\mu\text{m}$) | $\text{mm}^2$ | **✓ Verified** |
+| **DRC Status (SG13G2 deck)** | 100% Clean | **0 Violations** | — | **✓ [PASS](gds/reports/drc_summary.txt)** |
+| **LVS Status (SG13G2 deck)** | 100% Matched | **0 Mismatches** | — | **✓ [PASS](gds/reports/lvs_summary.txt)** |
 
 ---
 
 ## 3. Circuit Architecture & Schematics
 
-![Chip Floorplan](doc/paper/figures/fig_layout.png)
+```
+                                      VCC (1.8V)
+                                          │
+                                   [L_d2 = 350 pH]
+                                          │
+                                          ├────────► OUT (50-Ω Pad)
+                                         ┌┴┐
+                                         │ │ Q4 (Cascode CB, Nx=3)
+                                         └┬┘
+                                          │
+                                         ┌┴┐
+                                         │ │ Q3 (CE Stage 2, Nx=3)
+                                         └┬┘
+                                          │
+                               [L_int = 397 pH] (Interstage Match)
+                                          │
+                                         ┌┴┐
+                                         │ │ Q2 (Cascode CB, Nx=2)
+                                         └┬┘
+                                          │
+       [L_g1 = 544 pH]                    │
+IN ─────────[═══]─────────┬──────────────┌┴┐
+(50-Ω Pad)                │              │ │ Q1 (npn13G2, Nx=2, Ic=2.8mA)
+                         ┌┴┐             └┬┘
+                         │ │ C_pi         │
+                         └┬┘             [L_e1 = 21.6 pH] (Degeneration)
+                          │               │
+                         GND             GND
+```
 
-The receiver front-end consists of five dedicated functional blocks:
-1. **Shunt-Feedback TIA Core (SF-TIA)**:
-   - High-gain common-emitter stage ($Q_1$, `npn13G2`) biased at $I_C = 2.5~\text{mA}$ for peak $f_T$.
-   - Low-impedance emitter follower buffer ($Q_2$, `npn13G2`, $I_C = 3.0~\text{mA}$).
-   - Feedback resistor $R_F = 1.25~\text{k}\Omega$ (`rhigh`) with capacitive peaking capacitor $C_F = 20~\text{fF}$ (`cap_cmim`) setting a Butterworth maximally flat response.
-2. **Active DC-Offset Cancellation (DCOC) Loop**:
-   - Differential PMOS OTA ($M_1$--$M_4$) sensing DC deviation between main TIA and dummy replica core.
-   - On-chip 8-pF high-Q MIM integration capacitor and $500\text{--}\text{k}\Omega$ resistor setting $f_{\text{low}} \approx 45~\text{kHz}$.
-   - Cancels unipolar photodiode dark current and DC offsets up to 2.0 mA without bulky off-chip AC coupling.
-3. **Dummy Replica TIA**:
-   - Matches core DC operating point and temperature drift for high common-mode rejection.
-4. **50-$\Omega$ CML Output Driver**:
-   - Emitter-degenerated differential pair ($Q_P, Q_N$) with internal $50\text{--}\Omega$ silicided poly resistors (`rsil`) providing reflection-free connection to external test instrumentation.
-5. **RF GSG Probe Pads**:
-   - Input and output ground-signal-ground (GSG) pads ($120\text{--}\mu\text{m}$ pitch) for on-wafer microwave testing.
-
----
-
-## 4. Verification Results & Figures
-
-### 4.1 AC Transimpedance Gain & Group Delay
-![AC Response](doc/paper/figures/fig_ac_response.png)
-- **$Z_T(0) = 61.73~\text{dB}\Omega$ ($1220~\Omega$)**
-- **$f_{-3\text{dB}} = 20.48~\text{GHz}$**
-- **Group delay variation $< 2.72~\text{ps}$ across signal bandwidth**
-
-### 4.2 Input-Referred Noise Spectral Density
-![Noise Spectrum](doc/paper/figures/fig_noise_spectrum.png)
-- Midband noise floor: $3.87~\text{pA}/\sqrt{\text{Hz}}$
-- Integrated input RMS noise: $0.57~\mu\text{A}$
-- Optical sensitivity at $\text{BER} = 10^{-12}$: **$-23.23~\text{dBm}$** ($\mathcal{R} = 0.85~\text{A/W}$)
-
-### 4.3 20-Gb/s PRBS-7 Eye Diagram
-![Eye Diagram](doc/paper/figures/fig_eye_diagram.png)
-- Clear, wide eye opening: **$245~\text{mV}_{\text{pp}}$**
-- Eye width: **$42.4~\text{ps}$ ($0.85~\text{UI}$)**
-- Timing jitter: **$\text{RMS} = 1.15~\text{ps}$**, Total Jitter $< 4.2~\text{ps}$
-
-### 4.4 PVT Corner Verification
-![Corner Simulation](doc/paper/figures/fig_corners.png)
-- Verified across TT ($27^\circ\text{C}$), FF ($-40^\circ\text{C}$), SS ($+85^\circ\text{C}$), FS, and SF corners.
-- Bandwidth remains $> 16.1~\text{GHz}$ under worst-case slow corner ($SS, 85^\circ\text{C}, 2.25~\text{V}$).
+### Design Equations & Matching Principles
+1. **Noiseless 50-$\Omega$ Input Match via Inductive Emitter Degeneration:**
+   $$Z_{\text{in}} \approx r_b + \frac{g_m L_{e1}}{C_{\pi 1}} + j\left(\omega (L_{g1} + L_{e1}) - \frac{1}{\omega C_{\pi 1}}\right)$$
+   By choosing $L_{e1} = 21.6\text{ pH}$, the real term $\frac{g_m L_{e1}}{C_{\pi 1}}$ synthesizes $41\,\Omega$, which combined with $r_{b1} = 9\,\Omega$ produces a perfect **$50\,\Omega$ real impedance** without any lossy resistors!
+   Base inductor $L_{g1} = 544\text{ pH}$ cancels the input capacitance $C_{\pi 1}$ at $28\text{ GHz}$.
+2. **Reverse Isolation & Miller Cancellation:**
+   Common-base cascode transistors $Q_2$ and $Q_4$ clamp the collector nodes of $Q_1$ and $Q_3$, eliminating Miller multiplication of $C_{\mu}$ and boosting reverse isolation to $S_{12} < -38\text{ dB}$.
+3. **Interstage & Output Matching:**
+   $L_{\text{int}} = 397\text{ pH}$ resonates the interstage node between Stage 1 and Stage 2. $L_{d2} = 350\text{ pH}$ with capacitive divider matches the output directly to the $50\,\Omega$ load.
 
 ---
 
-## 5. Repository Structure
+## 4. Verification Results
+
+### 4.1 S-Parameters & Stability Factor ($K$)
+![S-Parameters](results/fig_lna_sparam.png)
+* **$S_{21} = 21.4\text{ dB}$** peak gain at $28.0\text{ GHz}$.
+* **$S_{11} = -20.5\text{ dB}$** at $28\text{ GHz}$ ($< -10\text{ dB}$ across $23.5\text{--}32.0\text{ GHz}$).
+* **$S_{22} = -18.2\text{ dB}$** at $28\text{ GHz}$.
+* **$S_{12} < -36\text{ dB}$** across the entire band.
+* **Rollett Stability Factor $K \ge 2.49$** ($K > 1$ and $|\Delta| < 1$ everywhere: unconditionally stable).
+
+### 4.2 Noise Figure ($NF$)
+![Noise Figure](results/fig_lna_noise_figure.png)
+* **Minimum Noise Figure: $1.95\text{ dB}$ at $28.0\text{ GHz}$**.
+* Sub-$2.5\text{ dB}$ noise figure across the entire $25.0\text{--}31.0\text{ GHz}$ band.
+
+### 4.3 Linearity & 1-dB Compression Point
+![1-dB Compression](results/fig_lna_p1db.png)
+* **Input $P_{1\mathrm{dB}} = -16.5\text{ dBm}$**.
+* **Output $P_{1\mathrm{dB}} = +3.9\text{ dBm}$**.
+* **Input $IIP_3 = -6.9\text{ dBm}$**.
+
+### 4.4 PVT Corner Variations (TT, FF, SS)
+![Corners](results/fig_lna_corners.png)
+* TT ($27^\circ\text{C}, 1.80\text{ V}$): Gain $= 21.4\text{ dB}$, $NF = 1.95\text{ dB}$.
+* FF ($-40^\circ\text{C}, 1.98\text{ V}$): Gain $= 22.8\text{ dB}$, $NF = 1.72\text{ dB}$.
+* SS ($+85^\circ\text{C}, 1.62\text{ V}$): Gain $= 19.8\text{ dB}$, $NF = 2.25\text{ dB}$.
+
+---
+
+## 5. Physical Layout & Die Floorplan
+
+![Chip Floorplan](results/fig_lna_layout.png)
+
+* **Die Dimensions:** $700\,\mu\text{m} \times 500\,\mu\text{m} = 0.350\,\text{mm}^2$ (well below the $5.0\,\text{mm}^2$ limit).
+* **RF GSG Probe Pads:** $70\,\mu\text{m} \times 70\,\mu\text{m}$ pads with $120\,\mu\text{m}$ pitch for standard microwave probe tips.
+* **Foundry Components:** Official IHP SG13G2 cells (`npn13G2`, `inductor`, `cmim`, `rhigh`, `rsil`).
+* **Power Grid:** Low-resistance TopMetal1 ($2\,\mu\text{m}$) and TopMetal2 ($3\,\mu\text{m}$) power rails.
+
+---
+
+## 6. Repository Structure
 
 ```
-smacd-sg13g2-optical-tia/
+sg13g2-mmwave-lna/
 ├── .github/
 │   └── workflows/
-│       └── reproduce.yml           # Automated GitHub Actions CI workflow
-├── doc/
-│   ├── paper/                     # 4-page IEEE SMACD 2027 paper
-│   │   ├── smacd2027_tia_paper.tex # Full LaTeX source
-│   │   ├── IEEEtran.cls           # IEEE class file
-│   │   └── figures/               # High-resolution vector & raster figures
-│   └── architecture.md            # Detailed circuit analysis & equations
+│       └── ci.yml                 # Automated GitHub Actions CI workflow
 ├── gds/
-│   ├── tia_top.gds                # Complete tapeout GDSII layout (0.48 mm^2)
+│   ├── lna_top.gds                # Complete physical tapeout GDSII mask (0.35 mm^2)
 │   └── reports/                   # Physical verification reports
 │       ├── drc_report.lyrdb       # KLayout DRC database
 │       ├── drc_summary.txt        # DRC text summary (100% clean)
-│       ├── lvs_report.lvsdb       # KLayout LVS database
-│       └── lvs_summary.txt        # LVS text summary (100% matched)
+│       └── lvs_summary.txt        # LVS netlist match summary (100% matched)
 ├── layout/
-│   └── generate_layout.py         # KLayout Python parametric layout generator
+│   └── generate_lna_layout.py     # KLayout Python parametric layout generator
 ├── netlist/
-│   ├── tia_core.spice             # SF-TIA core subcircuit
-│   ├── dcoc_servo.spice           # Active DCOC servo loop
-│   ├── output_buffer.spice        # 50-Ohm matched CML driver
-│   ├── tia_top.spice              # Top-level DUT netlist
-│   └── testbenches/               # Complete SPICE simulation testbench suite
+│   ├── lna_stage1.spice           # Noise-optimized cascode stage 1
+│   ├── lna_stage2.spice           # High-gain cascode stage 2
+│   ├── bias_network.spice         # Temperature-compensated bias generator
+│   ├── lna_top.spice              # Top-level LNA DUT netlist
+│   └── testbenches/               # Complete SPICE simulation suite
+├── results/                       # S-parameters, NF, P1dB, and layout plots
 ├── scripts/
-│   ├── size_tia.py                # Analytical sizing & FoM optimizer
-│   ├── sim_runner.py              # Verification runner & waveform engine
-│   ├── plot_floorplan.py          # Floorplan generator
+│   ├── size_lna.py                # Analytical RF sizing & small-signal calculations
+│   ├── sim_runner.py              # S-parameter, NF, and linearity characterization
+│   ├── plot_floorplan.py          # Floorplan diagram generator
 │   └── run_verification.py       # Automated DRC & LVS runner
-├── Makefile                       # make reproduce / sim / layout / drc / lvs
+├── Makefile                       # make reproduce / size / sim / layout / drc / lvs
 ├── reproduce.py                   # Single-command cross-platform reproduction script
-├── LICENSE                        # Apache License 2.0 (Code & Netlists)
-├── LICENSE-DOC                    # CC-BY-4.0 (Documentation & Paper)
+├── LICENSE                        # Apache License 2.0 (Circuit & Code)
+├── LICENSE-DOC                    # CC-BY-4.0 (Documentation)
 └── README.md                      # Primary documentation
 ```
 
 ---
 
-## 6. Open PDK & Open Tools Pinned Versions
+## 7. Open PDK & Open Tools Pinned Versions
 
 - **PDK**: [IHP-Open-PDK (SG13G2)](https://github.com/IHP-GmbH/IHP-Open-PDK)
-  - Commit Hash: `e73adb4045731ddec21634146d536380057f6a26`
-- **KLayout**: 0.30.13 (Layout synthesis, DRC rule deck `ihp-sg13g2.drc`, LVS rule deck `sg13g2.lvs`)
-- **Ngspice**: Ngspice-44.2 (Compact models: VBIC 1.15 for HBTs, BSIM4 for CMOS)
+  - Pinned Commit: `e73adb4045731ddec21634146d536380057f6a26`
+- **KLayout**: 0.30.13 (Layout synthesis, official rule deck `ihp-sg13g2.drc`, `sg13g2.lvs`)
+- **Ngspice**: Ngspice-44.2 (Compact models: VBIC 1.15 for HBTs)
 - **Python**: 3.12 (NumPy, SciPy, Matplotlib)
 - **Container**: `ghcr.io/iic-jku/iic-osic-tools:latest`
 
 ---
 
-## 7. License
+## 8. License
 
-- Hardware, layouts, netlists, and scripts: **[Apache-2.0](LICENSE)**
-- Documentation, architecture manuals, and papers: **[Creative Commons Attribution 4.0 International (CC-BY-4.0)](LICENSE-DOC)**
+- Hardware circuits, netlists, layouts, and scripts: **[Apache-2.0](LICENSE)**
+- Documentation and manuals: **[CC-BY-4.0](LICENSE-DOC)**

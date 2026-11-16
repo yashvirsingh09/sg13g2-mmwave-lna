@@ -1,6 +1,6 @@
 # ==============================================================================
-# Makefile for SMACD 2027 Open-Source Design Challenge
-# Design: 20-Gbps SiGe-BiCMOS Optical TIA Front-End (IHP SG13G2)
+# Makefile: 24-28 GHz mmWave SiGe-BiCMOS LNA
+# SMACD 2027 Open-Source Design Challenge
 # SPDX-License-Identifier: Apache-2.0
 # ==============================================================================
 
@@ -11,40 +11,39 @@ KLAYOUT ?= klayout
 
 all: reproduce
 
-## Run the full end-to-end reproduction pipeline
+## Run the full end-to-end verification pipeline
 reproduce:
 	$(PYTHON) reproduce.py
 
-## Run analytical sizing and parameter optimization
+## Run analytical RF sizing & transistor calculations
 size:
-	$(PYTHON) scripts/size_tia.py
+	$(PYTHON) scripts/size_lna.py
 
-## Run SPICE simulations and generate paper figures
+## Run S-parameter, noise figure, and linearity characterization
 sim:
 	$(PYTHON) scripts/sim_runner.py
 
-## Generate physical GDSII layout
+## Generate physical GDSII layout in KLayout
 layout:
-	$(KLAYOUT) -b -r layout/generate_layout.py
+	$(KLAYOUT) -b -r layout/generate_lna_layout.py
 	$(PYTHON) scripts/plot_floorplan.py
 
-## Run DRC physical rule check
+## Run DRC physical check against official IHP deck
 drc:
 	$(PYTHON) -c "from scripts.run_verification import run_drc; run_drc()"
 
-## Run LVS layout vs schematic check
+## Run LVS netlist check against official IHP deck
 lvs:
 	$(PYTHON) -c "from scripts.run_verification import run_lvs; run_lvs()"
 
-## Clean temporary simulation and test logs
 clean:
 	rm -rf *.raw *.log results/*.tmp
 
 help:
-	@echo "SMACD 2027 Open-Source Design Challenge Build Commands:"
-	@echo "  make reproduce  - Execute full end-to-end verification and report"
-	@echo "  make size       - Execute analytical transistor and noise sizing"
-	@echo "  make sim        - Run simulations and generate publication plots"
-	@echo "  make layout     - Generate physical GDSII layout"
+	@echo "Available commands:"
+	@echo "  make reproduce  - Run full verification pipeline"
+	@echo "  make size       - Calculate transistor sizing and component values"
+	@echo "  make sim        - Run S-parameter & Noise Figure simulations"
+	@echo "  make layout     - Synthesize GDSII layout mask"
 	@echo "  make drc        - Run KLayout DRC check"
 	@echo "  make lvs        - Run KLayout LVS check"

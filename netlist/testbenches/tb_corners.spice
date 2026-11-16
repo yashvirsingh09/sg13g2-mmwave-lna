@@ -1,52 +1,46 @@
 * ==============================================================================
-* SMACD 2027: Multi-Corner Process & Temperature Characterization Testbench
-* Circuit: 20-Gbps SiGe-BiCMOS Optical TIA (IHP SG13G2)
+* SMACD 2027: Multi-Corner PVT Characterization Testbench (24-28 GHz LNA)
+* Technology: IHP SG13G2 (130 nm SiGe BiCMOS)
 * SPDX-License-Identifier: Apache-2.0
 * ==============================================================================
 
-* Corner definitions:
-* TT: Typical HBT, Typical MOS, Typical Res, Typical Cap (27 C, VDD = 2.50V)
-* FF: Fast HBT, Fast MOS, Low Res, Low Cap (-40 C, VDD = 2.75V)
-* SS: Slow HBT, Slow MOS, High Res, High Cap (+85 C, VDD = 2.25V)
-* FS: Fast HBT, Slow MOS (+27 C, VDD = 2.50V)
-* SF: Slow HBT, Fast MOS (+27 C, VDD = 2.50V)
+* Evaluates:
+* TT: Typical HBT (hbt_typ), VCC = 1.80V, Temp = 27 C
+* FF: Fast HBT (hbt_bcs), VCC = 1.98V, Temp = -40 C
+* SS: Slow HBT (hbt_wcs), VCC = 1.62V, Temp = 85 C
 
-.include ../tia_top.spice
+.include ../lna_top.spice
 
-VDD VDD 0 DC 2.5
-VSS VSS 0 DC 0.0
+VCC VCC 0 DC 1.8
+VGND GND 0 DC 0.0
 
-IIN 0 IN_PAD DC 0 AC 1u
-CPD IN_PAD 0 40f
+P1 IN_PAD 0 port=1 z0=50
+P2 OUT_PAD 0 port=2 z0=50
 
-XDUT IN_PAD OUT_P OUT_N VDD VSS tia_top
+XDUT IN_PAD OUT_PAD VCC GND lna_top
 
-RLOAD_P OUT_P 0 50
-RLOAD_N OUT_N 0 50
-
-.ac dec 50 10meg 40g
+.sp dec 50 20g 35g 1
 
 .control
-let corners = 5
-* TT
-alter vdd = 2.50
+* TT Run
 set temp = 27
+alter vcc = 1.80
 run
-let zt_tt = 20 * log10(abs(v(out_p, out_n) / 1e-6))
+let s21_tt = db(S_2_1)
 
-* FF
-alter vdd = 2.75
+* FF Run
 set temp = -40
+alter vcc = 1.98
 run
-let zt_ff = 20 * log10(abs(v(out_p, out_n) / 1e-6))
+let s21_ff = db(S_2_1)
 
-* SS
-alter vdd = 2.25
+* SS Run
 set temp = 85
+alter vcc = 1.62
 run
-let zt_ss = 20 * log10(abs(v(out_p, out_n) / 1e-6))
+let s21_ss = db(S_2_1)
 
-write tb_corners.raw zt_tt zt_ff zt_ss frequency
+write tb_corners.raw s21_tt s21_ff s21_ss frequency
 quit
 .endc
 

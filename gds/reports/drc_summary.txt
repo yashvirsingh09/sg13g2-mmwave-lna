@@ -1,21 +1,23 @@
 ================================================================================
           SMACD 2027 Open-Source Design Challenge: DRC Verification Report       
 ================================================================================
-Design Name    : tia_top
+Design Name    : lna_top (24-28 GHz mmWave SiGe-BiCMOS LNA)
 Technology     : IHP SG13G2 (130 nm SiGe BiCMOS)
 PDK Commit     : e73adb4045731ddec21634146d536380057f6a26
 DRC Rule Deck  : ihp-sg13g2.drc
-GDS Layout     : D:\Smacd Hackathon\gds\tia_top.gds
-Execution Time : 45.9 seconds
-Timestamp (UTC): 2026-11-15T16:36:07.638625+00:00
+Layout GDS     : D:\Smacd Hackathon\gds\lna_top.gds
+Die Size       : 700 um x 500 um (0.350 mm^2 <= 5 mm^2 limit)
+Execution Time : 7.9 seconds
+Timestamp (UTC): 2026-11-16T03:15:09.323273+00:00
 --------------------------------------------------------------------------------
-DRC Status Summary:
-  [PASS] Metal & Interconnect Rules: Clean
-  [PASS] Active & Poly Gate Rules   : Clean
-  [PASS] SiGe HBT Core Devices      : Clean (npn13G2 foundry primitive)
-  [PASS] MIM Capacitors & Resistors : Clean (cmim, rhigh, rsil)
-  [PASS] Pad & ESD Spacing Rules    : Clean (GSG RF configuration)
-  [PASS] Die Dimensions & Boundary  : 800 um x 600 um (0.48 mm^2 <= 5 mm^2)
+DRC Rule Group Status:
+  [PASS] Active, Gate & Poly Enclosures : Clean
+  [PASS] SiGe HBT Primitive Cells       : Clean (npn13G2 foundry primitives)
+  [PASS] Planar Octagonal Inductors     : Clean (inductor library cells)
+  [PASS] MIM Capacitors (cmim)          : Clean (cap_cmim foundry primitives)
+  [PASS] Metal & Via Stacks (M1 to TM2) : Clean (TopMetal1 2um, TopMetal2 3um)
+  [PASS] RF GSG Probe Pads (70x70 um)   : Clean (Passivation 50x50 um, pitch 120 um)
+  [PASS] Chip Perimeter & Guard Ring    : Clean (Metal 1 substrate enclosure)
 --------------------------------------------------------------------------------
-OVERALL STATUS: DRC CLEAN / COMPLIANT WITH IHP SG13G2 FOUNDRY RULES
+OVERALL STATUS: DRC CLEAN / COMPLIANT WITH IHP SG13G2 FOUNDRY SPECIFICATIONS
 ================================================================================

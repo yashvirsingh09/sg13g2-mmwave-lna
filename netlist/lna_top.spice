@@ -1,0 +1,64 @@
+* ==============================================================================
+* SMACD 2027 Open-Source Design Challenge
+* Circuit: Top-Level 24-28 GHz 2-Stage SiGe-BiCMOS Low-Noise Amplifier
+* Technology: IHP SG13G2 130nm SiGe BiCMOS (fT = 300 GHz)
+* SPDX-License-Identifier: Apache-2.0
+* ==============================================================================
+
+.lib "../ihp_pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerHBT.lib" hbt_typ
+.lib "../ihp_pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerRES.lib" res_typ
+.lib "../ihp_pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerCAP.lib" cap_typ
+
+.include lna_stage1.spice
+.include lna_stage2.spice
+.include bias_network.spice
+
+.subckt lna_top RFIN_PAD RFOUT_PAD VCC GND
+* RFIN_PAD: High-frequency RF input probe pad (50-Ohm matched)
+* RFOUT_PAD: High-frequency RF output probe pad (50-Ohm matched)
+* VCC: 1.8V Analog Supply
+* GND: 0V Ground
+
+* ------------------------------------------------------------------------------
+* RF Input GSG Pad Model (Cp ~ 25 fF, Rp ~ 1.2 Ohm)
+* ------------------------------------------------------------------------------
+R_PAD_IN RFIN_PAD IN_INT 1.2
+C_PAD_IN IN_INT GND 25f
+
+* Base Matching Spiral Inductor Lg1 (544 pH, Q ~ 20 at 28 GHz)
+L_G1 IN_INT IN_STG1 544.0p Rser=0.95
+
+* ------------------------------------------------------------------------------
+* Stage 1: Noise-Optimized Cascode Core
+* ------------------------------------------------------------------------------
+XSTG1 IN_STG1 STG1_OUT VCC GND VB_B1 VB_C1 lna_stage1
+
+* ------------------------------------------------------------------------------
+* Interstage Matching Inductor Lint (397 pH, Q ~ 22 at 28 GHz)
+* Connects Q2 collector to VCC while resonating interstage parasitics
+* ------------------------------------------------------------------------------
+L_INT VCC STG1_OUT 397.0p Rser=0.72
+
+* ------------------------------------------------------------------------------
+* Stage 2: High-Gain & Linearity Cascode Core
+* ------------------------------------------------------------------------------
+XSTG2 STG1_OUT OUT_INT VCC GND VB_B2 VB_C2 lna_stage2
+
+* ------------------------------------------------------------------------------
+* RF Output GSG Pad Model (Cp ~ 25 fF, Rp ~ 1.2 Ohm)
+* ------------------------------------------------------------------------------
+R_PAD_OUT OUT_INT RFOUT_PAD 1.2
+C_PAD_OUT RFOUT_PAD GND 25f
+
+* ------------------------------------------------------------------------------
+* On-Chip Bias Distribution Network
+* ------------------------------------------------------------------------------
+XBIAS VB_B1 VB_C1 VB_B2 VB_C2 VCC GND bias_network
+
+* ------------------------------------------------------------------------------
+* Supply Decoupling Capacitors (Low-impedance RF ground return)
+* ------------------------------------------------------------------------------
+XC_VCC1 VCC GND cap_cmim w=40u l=40u
+XC_VCC2 VCC GND cap_cmim w=40u l=40u
+
+.ends lna_top

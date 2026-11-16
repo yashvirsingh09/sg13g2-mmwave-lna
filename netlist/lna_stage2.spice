@@ -1,0 +1,47 @@
+* ==============================================================================
+* SMACD 2027 Open-Source Design Challenge
+* Circuit: Stage 2 High-Gain & High-Linearity Cascode (24-28 GHz LNA)
+* Technology: IHP SG13G2 130nm SiGe BiCMOS (fT = 300 GHz)
+* SPDX-License-Identifier: Apache-2.0
+* ==============================================================================
+
+.subckt lna_stage2 STAGE1_OUT RF_OUT VCC GND VBIAS_B2 VBIAS_C2
+* STAGE1_OUT: RF input from interstage matching network
+* RF_OUT: 50-Ohm matched output node
+* VCC: 1.8V Analog Supply
+* GND: 0V Ground
+* VBIAS_B2: DC bias voltage for Q3 base (~0.88V)
+* VBIAS_C2: DC bias voltage for Q4 cascode base (~1.65V)
+
+* ------------------------------------------------------------------------------
+* Common-Emitter Transistor Q3 (npn13G2, Nx=3)
+* Sized with Nx=3 (Ic2 = 3.6 mA) for high output compression (P1dB)
+* ------------------------------------------------------------------------------
+XQ3 C3 B3 E3 GND npn13G2 Nx=3
+
+* Interstage AC coupling & DC feed
+XR_B3 VBIAS_B2 B3 GND rhigh w=0.5u l=8.0u
+XC_INT STAGE1_OUT B3 cap_cmim w=10u l=10u
+
+* Emitter degeneration inductor Le2 (25 pH) for linearity
+L_E2 E3 GND 25.0p Rser=0.08
+
+* ------------------------------------------------------------------------------
+* Common-Base Cascode Transistor Q4 (npn13G2, Nx=3)
+* ------------------------------------------------------------------------------
+XQ4 C4 B4 C3 GND npn13G2 Nx=3
+
+* Base bypass capacitor for Q4 (1.5 pF)
+XC_B4 B4 GND cap_cmim w=32u l=32u
+XR_B4 VBIAS_C2 B4 GND rhigh w=0.5u l=5.0u
+
+* ------------------------------------------------------------------------------
+* Output Matching Network (Ld2 + Cout) to 50-Ohm Pad
+* ------------------------------------------------------------------------------
+* Collector load inductor Ld2 (350 pH)
+L_D2 VCC C4 350.0p Rser=0.65
+
+* Output AC coupling capacitor Cout (matches to 50 Ohms at 28 GHz)
+XC_OUT C4 RF_OUT cap_cmim w=8u l=8u
+
+.ends lna_stage2

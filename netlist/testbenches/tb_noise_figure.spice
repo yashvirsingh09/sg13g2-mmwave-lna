@@ -1,0 +1,36 @@
+* ==============================================================================
+* SMACD 2027: Noise Figure Analysis Testbench (24-28 GHz LNA)
+* Technology: IHP SG13G2 (130 nm SiGe BiCMOS)
+* SPDX-License-Identifier: Apache-2.0
+* ==============================================================================
+
+.include ../lna_top.spice
+
+* Power Supply
+VCC VCC 0 DC 1.8
+VGND GND 0 DC 0.0
+
+* Input 50-Ohm Source with Thermal Noise
+VIN IN_PAD 0 DC 0 AC 1.0
+R_SRC IN_PAD IN_DUT 50.0
+
+* Device Under Test
+XDUT IN_DUT OUT_PAD VCC GND lna_top
+
+* Output 50-Ohm Load
+R_LOAD OUT_PAD 0 50.0
+
+* Noise Analysis (20 GHz to 35 GHz)
+.noise v(out_pad) VIN dec 50 20g 35g
+
+.control
+run
+* Noise Figure NF = 10 * log10(Total Output Noise / Output Noise from Source Resistor R_SRC)
+let gain_mag = abs(v(out_pad) / v(in_dut))
+let nf_db = 10 * log10(onoise_spectrum / (4 * 1.38e-23 * 300 * 50 * (gain_mag^2) + 1e-30))
+
+write tb_noise_figure.raw onoise_spectrum inoise_spectrum nf_db frequency
+quit
+.endc
+
+.end

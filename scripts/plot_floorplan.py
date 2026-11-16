@@ -1,6 +1,6 @@
 """
 Generates publication-quality annotated IC floorplan and layout diagram
-for the SMACD 2027 IEEE 4-page paper and repository README.
+for the 24-28 GHz mmWave SiGe-BiCMOS LNA.
 """
 
 import matplotlib
@@ -8,94 +8,99 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
-def draw_chip_floorplan():
-    fig, ax = plt.subplots(figsize=(8, 6.2))
+def draw_lna_floorplan():
+    fig, ax = plt.subplots(figsize=(8.2, 5.8))
     
-    # Chip Boundary (800 um x 600 um)
-    die_rect = patches.Rectangle((0, 0), 800, 600, linewidth=2.5, edgecolor='#1a237e', facecolor='#f5f5f5')
+    # Chip Boundary (700 um x 500 um)
+    die_rect = patches.Rectangle((0, 0), 700, 500, linewidth=2.5, edgecolor='#0d47a1', facecolor='#fafafa')
     ax.add_patch(die_rect)
     
-    # Guard Ring / Sealring (Substrate/Metal1)
-    ring = patches.Rectangle((10, 10), 780, 580, linewidth=1.5, edgecolor='#424242', facecolor='none', linestyle='--')
+    # Perimeter Guard Ring
+    ring = patches.Rectangle((8, 8), 684, 484, linewidth=1.5, edgecolor='#424242', facecolor='none', linestyle='--')
     ax.add_patch(ring)
     
-    # Power Rings (TopMetal1 & TopMetal2)
-    vdd_bus = patches.Rectangle((190, 330), 280, 20, linewidth=1.0, edgecolor='#b71c1c', facecolor='#ef9a9a', alpha=0.8)
-    vss_bus = patches.Rectangle((190, 90), 280, 20, linewidth=1.0, edgecolor='#0d47a1', facecolor='#90caf9', alpha=0.8)
-    ax.add_patch(vdd_bus)
-    ax.add_patch(vss_bus)
-    ax.text(330, 335, 'VDD Power Bus (TopMetal2, 20 um)', color='#b71c1c', fontweight='bold', fontsize=8.5, ha='center')
-    ax.text(330, 95, 'VSS Ground Bus (TopMetal1, 20 um)', color='#0d47a1', fontweight='bold', fontsize=8.5, ha='center')
+    # Power Buses (TopMetal1 & TopMetal2)
+    vcc_bus = patches.Rectangle((140, 415), 420, 20, linewidth=1.0, edgecolor='#b71c1c', facecolor='#ef9a9a', alpha=0.85)
+    gnd_bus = patches.Rectangle((140, 65), 420, 25, linewidth=1.0, edgecolor='#0d47a1', facecolor='#90caf9', alpha=0.85)
+    ax.add_patch(vcc_bus)
+    ax.add_patch(gnd_bus)
+    ax.text(350, 422, 'VCC Power Bus (TopMetal2, 20 um, 1.8V)', color='#b71c1c', fontweight='bold', fontsize=8.5, ha='center')
+    ax.text(350, 74, 'GND Return Plane (TopMetal1, 25 um)', color='#0d47a1', fontweight='bold', fontsize=8.5, ha='center')
     
-    # Core Circuit Blocks
-    # 1. Main TIA Core
-    tia_core = patches.Rectangle((230, 180), 90, 80, linewidth=1.8, edgecolor='#004d40', facecolor='#80cbc4', alpha=0.9)
-    ax.add_patch(tia_core)
-    ax.text(275, 225, 'Main TIA Core\n(npn13G2 HBTs\nRF = 1.25k, CF)', color='#004d40', fontweight='bold', fontsize=8.5, ha='center', va='center')
+    # Circuit Blocks
+    # 1. Base Matching Spiral Inductor Lg1 (544 pH)
+    ind1 = patches.Circle((180, 210), 38, linewidth=1.8, edgecolor='#e65100', facecolor='#ffe0b2')
+    ax.add_patch(ind1)
+    ax.text(180, 210, 'L_g1\n(544 pH)', color='#e65100', fontweight='bold', fontsize=8.5, ha='center', va='center')
     
-    # 2. Replica TIA Core
-    rep_core = patches.Rectangle((370, 180), 90, 80, linewidth=1.8, edgecolor='#311b92', facecolor='#b39ddb', alpha=0.8)
-    ax.add_patch(rep_core)
-    ax.text(415, 225, 'Replica TIA\n(Dummy Stage\nBalanced Bias)', color='#311b92', fontweight='bold', fontsize=8.5, ha='center', va='center')
+    # 2. Stage 1 Cascode Core (Q1, Q2, Le1)
+    stg1 = patches.Rectangle((230, 220), 65, 75, linewidth=1.8, edgecolor='#004d40', facecolor='#80cbc4')
+    ax.add_patch(stg1)
+    ax.text(262, 257, 'Stage 1 Core\n(npn13G2 CE/CB\nL_e1 = 22 pH)', color='#004d40', fontweight='bold', fontsize=8.0, ha='center', va='center')
     
-    # 3. DCOC Servo Loop & Large MIM Integrating Capacitor
-    dcoc_box = patches.Rectangle((280, 115), 140, 50, linewidth=1.8, edgecolor='#e65100', facecolor='#ffcc80', alpha=0.9)
-    ax.add_patch(dcoc_box)
-    ax.text(350, 140, 'Active DCOC Servo Loop\n(PMOS OTA & 8-pF MIM Caps)', color='#e65100', fontweight='bold', fontsize=8.5, ha='center', va='center')
+    # 3. Interstage Matching Spiral Inductor Lint (397 pH)
+    ind2 = patches.Circle((340, 280), 32, linewidth=1.8, edgecolor='#e65100', facecolor='#ffe0b2')
+    ax.add_patch(ind2)
+    ax.text(340, 280, 'L_int\n(397 pH)', color='#e65100', fontweight='bold', fontsize=8.5, ha='center', va='center')
     
-    # 4. 50-Ohm CML Output Buffer
-    buf_box = patches.Rectangle((290, 270), 110, 50, linewidth=1.8, edgecolor='#880e4f', facecolor='#f48fb1', alpha=0.9)
-    ax.add_patch(buf_box)
-    ax.text(345, 295, '50-Ohm CML Driver\n(npn13G2, R_L=50 Ohm)', color='#880e4f', fontweight='bold', fontsize=8.5, ha='center', va='center')
+    # 4. Stage 2 Cascode Core (Q3, Q4, Le2)
+    stg2 = patches.Rectangle((400, 220), 65, 75, linewidth=1.8, edgecolor='#4a148c', facecolor='#ce93d8')
+    ax.add_patch(stg2)
+    ax.text(432, 257, 'Stage 2 Core\n(npn13G2 CE/CB\nNx = 3)', color='#4a148c', fontweight='bold', fontsize=8.0, ha='center', va='center')
     
-    # Bondpads (70 um x 70 um)
+    # 5. Output Load Inductor Ld2 (350 pH)
+    ind3 = patches.Circle((520, 210), 30, linewidth=1.8, edgecolor='#e65100', facecolor='#ffe0b2')
+    ax.add_patch(ind3)
+    ax.text(520, 210, 'L_d2\n(350 pH)', color='#e65100', fontweight='bold', fontsize=8.5, ha='center', va='center')
+    
+    # 6. Bias Generator & Decoupling
+    bias_box = patches.Rectangle((280, 110), 140, 45, linewidth=1.5, edgecolor='#37474f', facecolor='#cfd8dc')
+    ax.add_patch(bias_box)
+    ax.text(350, 132, 'Bias Mirror & Decoupling\n(rhigh, cap_cmim 40 um)', color='#263238', fontweight='bold', fontsize=8.0, ha='center', va='center')
+    
+    # RF GSG Probe Pads
     pads = [
-        # Input GSG Pads (West)
-        (60, 80, 'GND (RF)', '#616161'),
-        (60, 200, 'IN (Opt)', '#d84315'),
-        (60, 320, 'GND (RF)', '#616161'),
-        # Output GSG Pads (East)
-        (660, 80, 'OUT_N', '#1565c0'),
-        (660, 200, 'GND (RF)', '#616161'),
-        (660, 320, 'OUT_P', '#1565c0'),
-        # Supply Pads (North & South)
-        (330, 480, 'VDD (2.5V)', '#c62828'),
-        (330, 30, 'VSS (0V)', '#2e7d32')
+        # West: Input GSG
+        (60, 130, 'GND (RF)', '#616161'),
+        (60, 250, 'RF_IN', '#d84315'),
+        (60, 370, 'GND (RF)', '#616161'),
+        # East: Output GSG
+        (640, 130, 'GND (RF)', '#616161'),
+        (640, 250, 'RF_OUT', '#1565c0'),
+        (640, 370, 'GND (RF)', '#616161'),
+        # North & South DC
+        (350, 450, 'VCC (1.8V)', '#c62828'),
+        (350, 50, 'GND (DC)', '#2e7d32')
     ]
     
     for px, py, label, col in pads:
-        rect = patches.Rectangle((px - 35, py - 35), 70, 70, linewidth=1.5, edgecolor='#212121', facecolor='#e0e0e0')
+        rect = patches.Rectangle((px - 30, py - 30), 60, 60, linewidth=1.5, edgecolor='#212121', facecolor='#e0e0e0')
         ax.add_patch(rect)
-        inner = patches.Rectangle((px - 25, py - 25), 50, 50, linewidth=1.0, edgecolor=col, facecolor='#fff59d')
+        inner = patches.Rectangle((px - 20, py - 20), 40, 40, linewidth=1.0, edgecolor=col, facecolor='#fff59d')
         ax.add_patch(inner)
-        ax.text(px, py, label, color='#212121', fontweight='bold', fontsize=7.5, ha='center', va='center')
+        ax.text(px, py, label, color='#212121', fontweight='bold', fontsize=7.0, ha='center', va='center')
         
-    # RF Input & Output Interconnect traces
-    ax.annotate('', xy=(230, 220), xytext=(95, 200),
+    # RF Signal Arrows
+    ax.annotate('', xy=(142, 220), xytext=(90, 250),
                 arrowprops=dict(arrowstyle="->", lw=2.2, color='#d84315'))
-    ax.annotate('', xy=(625, 320), xytext=(400, 305),
-                arrowprops=dict(arrowstyle="->", lw=2.2, color='#1565c0'))
-    ax.annotate('', xy=(625, 80), xytext=(400, 285),
+    ax.annotate('', xy=(610, 250), xytext=(550, 220),
                 arrowprops=dict(arrowstyle="->", lw=2.2, color='#1565c0'))
                 
-    # Labels and Dimensions
-    ax.text(400, 560, 'IHP SG13G2 130-nm SiGe BiCMOS Tapeout Layout', fontsize=13, fontweight='bold', ha='center', color='#1a237e')
-    ax.text(400, 538, 'Die Size: 800 um x 600 um (Area: 0.48 mm^2 < 5 mm^2 limit)', fontsize=10, ha='center', style='italic', color='#424242')
+    # Labels & Scale
+    ax.text(350, 475, 'IHP SG13G2 24-28 GHz mmWave LNA Physical Mask Layout', fontsize=12, fontweight='bold', ha='center', color='#0d47a1')
+    ax.text(350, 20, 'Die Dimensions: 700 um x 500 um (Area: 0.35 mm^2 <= 5 mm^2 limit)', fontsize=9.5, ha='center', style='italic', color='#424242')
     
-    # Scale bar & Grid
-    ax.set_xlim([-20, 820])
-    ax.set_ylim([-20, 620])
-    ax.set_xlabel(r'X Coordinate [$\mu\mathrm{m}$]', fontsize=11, fontweight='bold')
-    ax.set_ylabel(r'Y Coordinate [$\mu\mathrm{m}$]', fontsize=11, fontweight='bold')
+    ax.set_xlim([-10, 710])
+    ax.set_ylim([-10, 510])
+    ax.set_xlabel(r'X Coordinate [$\mu\mathrm{m}$]', fontsize=10.5, fontweight='bold')
+    ax.set_ylabel(r'Y Coordinate [$\mu\mathrm{m}$]', fontsize=10.5, fontweight='bold')
     ax.set_aspect('equal')
     ax.grid(True, linestyle=':', alpha=0.5)
     
     plt.tight_layout()
-    fig.savefig('doc/paper/figures/fig_layout.pdf')
-    fig.savefig('doc/paper/figures/fig_layout.png', dpi=300)
-    fig.savefig('results/fig_layout.png', dpi=300)
+    fig.savefig('results/fig_lna_layout.png', dpi=300)
     plt.close()
-    print("--> Successfully saved layout floorplan figure: doc/paper/figures/fig_layout.png")
+    print("--> Successfully generated layout floorplan plot: results/fig_lna_layout.png")
 
 if __name__ == '__main__':
-    draw_chip_floorplan()
+    draw_lna_floorplan()

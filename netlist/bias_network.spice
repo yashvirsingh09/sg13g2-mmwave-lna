@@ -1,0 +1,39 @@
+* ==============================================================================
+* SMACD 2027 Open-Source Design Challenge
+* Circuit: Temperature-Compensated Bias Generator for 28-GHz LNA
+* Technology: IHP SG13G2 130nm SiGe BiCMOS
+* SPDX-License-Identifier: Apache-2.0
+* ==============================================================================
+
+.subckt bias_network VBIAS_B1 VBIAS_C1 VBIAS_B2 VBIAS_C2 VCC GND
+* VBIAS_B1: Base bias for Q1 (~0.88V)
+* VBIAS_C1: Cascode base bias for Q2 (~1.65V)
+* VBIAS_B2: Base bias for Q3 (~0.88V)
+* VBIAS_C2: Cascode base bias for Q4 (~1.65V)
+
+* ------------------------------------------------------------------------------
+* Master Current Reference Branch (I_REF ~ 250 uA)
+* ------------------------------------------------------------------------------
+XR_REF VCC N_REF GND rhigh w=1.0u l=15.0u
+XQ_REF N_REF N_REF GND GND npn13G2 Nx=1
+
+* Mirror to Q1 base bias (ratio 1:10)
+XQ_MIRR1 VBIAS_B1 N_REF GND GND npn13G2 Nx=1
+XR_DECAP1 VBIAS_B1 GND GND rhigh w=0.5u l=10.0u
+XC_DECAP1 VBIAS_B1 GND cap_cmim w=20u l=20u
+
+* Mirror to Q3 base bias
+XQ_MIRR2 VBIAS_B2 N_REF GND GND npn13G2 Nx=1
+XC_DECAP2 VBIAS_B2 GND cap_cmim w=20u l=20u
+
+* Cascode Base Bias Divider (sets VBIAS_C1 and VBIAS_C2 to ~1.65V from 1.8V VCC)
+XR_DIV1 VCC VBIAS_C1 GND rhigh w=1.0u l=3.0u
+XR_DIV2 VBIAS_C1 GND GND rhigh w=1.0u l=30.0u
+XC_DECAP_C1 VBIAS_C1 GND cap_cmim w=25u l=25u
+
+* Cascode 2 bias
+XR_DIV3 VCC VBIAS_C2 GND rhigh w=1.0u l=3.0u
+XR_DIV4 VBIAS_C2 GND GND rhigh w=1.0u l=30.0u
+XC_DECAP_C2 VBIAS_C2 GND cap_cmim w=25u l=25u
+
+.ends bias_network

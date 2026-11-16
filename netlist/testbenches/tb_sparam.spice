@@ -1,0 +1,40 @@
+* ==============================================================================
+* SMACD 2027: 2-Port S-Parameter Simulation Testbench (24-28 GHz LNA)
+* Technology: IHP SG13G2 (130 nm SiGe BiCMOS)
+* SPDX-License-Identifier: Apache-2.0
+* ==============================================================================
+
+.include ../lna_top.spice
+
+* Power Supply
+VCC VCC 0 DC 1.8
+VGND GND 0 DC 0.0
+
+* Port 1 (Input 50 Ohm Port)
+P1 IN_PAD 0 port=1 z0=50
+* Port 2 (Output 50 Ohm Port)
+P2 OUT_PAD 0 port=2 z0=50
+
+* Device Under Test
+XDUT IN_PAD OUT_PAD VCC GND lna_top
+
+* S-Parameter Analysis from 10 GHz to 40 GHz (100 MHz resolution)
+.sp dec 100 10g 40g 1
+
+.control
+run
+* S-parameter extraction
+let s11_db = db(S_1_1)
+let s21_db = db(S_2_1)
+let s12_db = db(S_1_2)
+let s22_db = db(S_2_2)
+
+* Rollett Stability Factor K
+let delta = S_1_1 * S_2_2 - S_1_2 * S_2_1
+let k_factor = (1 - mag(S_1_1)^2 - mag(S_2_2)^2 + mag(delta)^2) / (2 * mag(S_1_2 * S_2_1))
+
+write tb_sparam.raw s11_db s21_db s12_db s22_db k_factor frequency
+quit
+.endc
+
+.end
