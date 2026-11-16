@@ -7,13 +7,17 @@
 PYTHON ?= python
 KLAYOUT ?= klayout
 
-.PHONY: all reproduce size sim layout drc lvs clean help
+.PHONY: all reproduce size sim layout drc lvs paper clean help
 
 all: reproduce
 
 ## Run the full end-to-end verification pipeline
 reproduce:
 	$(PYTHON) reproduce.py
+
+## Compile IEEE 4-page paper to PDF
+paper:
+	cd doc && pdflatex -interaction=nonstopmode smacd2027_paper.tex && pdflatex -interaction=nonstopmode smacd2027_paper.tex
 
 ## Run analytical RF sizing & transistor calculations
 size:

@@ -29,23 +29,35 @@ jobs:
         run: |
           pip install numpy scipy matplotlib
 
-      - name: Fetch IHP SG13G2 Open PDK
+      - name: Fetch IHP SG13G2 Open PDK (Pinned Commit e73adb4)
         run: |
-          git clone --filter=blob:none --no-checkout --depth 1 https://github.com/IHP-GmbH/IHP-Open-PDK.git ihp_pdk
-          cd ihp_pdk
-          git sparse-checkout set ihp-sg13g2/libs.tech/klayout ihp-sg13g2/libs.tech/ngspice ihp-sg13g2/libs.ref
-          git checkout e73adb4045731ddec21634146d536380057f6a26
+          mkdir ihp_pdk && cd ihp_pdk
+          git init
+          git remote add origin https://github.com/IHP-GmbH/IHP-Open-PDK.git
+          git config core.sparseCheckout true
+          echo "ihp-sg13g2/libs.tech/klayout" >> .git/info/sparse-checkout
+          echo "ihp-sg13g2/libs.tech/ngspice" >> .git/info/sparse-checkout
+          echo "ihp-sg13g2/libs.ref" >> .git/info/sparse-checkout
+          git fetch --depth 1 origin e73adb4045731ddec21634146d536380057f6a26
+          git checkout FETCH_HEAD
           cd ..
 
       - name: Run End-to-End Verification Pipeline
         run: |
           python reproduce.py
 
-      - name: Upload Verification Artifacts
+      - name: Build IEEE 4-Page Paper PDF
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: smacd2027_paper.tex
+          working_directory: doc
+
+      - name: Upload Verification & Submission Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: mmwave-lna-verification-results
+          name: mmwave-lna-submission-package
           path: |
+            doc/smacd2027_paper.pdf
             results/
             gds/reports/
             gds/lna_top.gds

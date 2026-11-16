@@ -1,4 +1,4 @@
-* Extracted by KLayout with SG13G2 LVS runset on : 16/11/2026 13:41
+* Extracted by KLayout with SG13G2 LVS runset on : 16/11/2026 15:53
 
 .SUBCKT lna_top LA LA$1 LA$2 LB LB$1 LB$2 LC LC$1 LC$2
 Q$1 \$22 \$21 \$27 \$1 npn13G2 we=70n le=900n Nx=1 m=1
