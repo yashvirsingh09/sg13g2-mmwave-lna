@@ -1,6 +1,7 @@
 * ==============================================================================
 * SMACD 2027: 2-Port S-Parameter Simulation Testbench (24-28 GHz LNA)
 * Technology: IHP SG13G2 (130 nm SiGe BiCMOS)
+* Standard Ngspice 2-Port Scattering Analysis Testbench
 * SPDX-License-Identifier: Apache-2.0
 * ==============================================================================
 
@@ -11,41 +12,20 @@
 VCC VCC 0 DC 1.8
 VGND GND 0 DC 0.0
 
-* Port 1 Drive (50 Ohm source with 2.0V AC, giving 1.0V incident wave)
-VIN IN_SRC 0 DC 0 AC 2.0
-RS1 IN_SRC IN_PAD 50.0
-
-* Port 2 Termination (50 Ohm load)
-RL2 OUT_PAD 0 50.0
-
 * Device Under Test
 XDUT GND LA LA1 LA2 LB VCC LC LC1 LC2 IN_PAD OUT_PAD VCC VCC lna_top
 
-* AC Frequency Sweep from 10 GHz to 40 GHz (100 pts/decade)
-.ac dec 100 10g 40g
+* 2-Port S-Parameter Analysis via Ngspice Native RF Port Elements (Ngspice 30+)
+P1 IN_PAD 0 port=1 z0=50
+P2 OUT_PAD 0 port=2 z0=50
+
+.sp dec 100 10g 40g 1
 
 .control
 run
-* S-parameter extraction using scattering wave equations
-* Incident wave a1 = 1.0 V
-* Reflected wave b1 = V(IN_PAD) - 1.0 V
-* Transmitted wave b2 = V(OUT_PAD)
-let s11_mag = mag(v(in_pad) - 1.0)
-let s11_db = db(v(in_pad) - 1.0)
-let s21_mag = mag(v(out_pad))
-let s21_db = db(v(out_pad))
-
-* Reverse isolation estimate (cascode stage with < -38 dB isolation)
-let s12_db = -42.0 + 2.0 * sin(frequency / 5e9)
-
-* Output reflection S22 estimate
-let s22_db = -16.5 + 4.0 * (frequency - 28e9) / 4e9
-
-* Rollett Stability Factor K
-let delta_mag = s11_mag * 0.15
-let k_factor = (1 - s11_mag^2 - 0.15^2 + delta_mag^2) / (2 * (10^(s12_db/20)) * s21_mag + 1e-12)
-
-write tb_sparam.raw s11_db s21_db s12_db s22_db k_factor frequency
+* S-parameters are automatically computed by the .sp analysis engine:
+* S11, S21, S12, S22
+write tb_sparam.raw S11 S21 S12 S22
 quit
 .endc
 
