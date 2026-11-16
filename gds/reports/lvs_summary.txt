@@ -7,14 +7,14 @@ PDK Commit     : e73adb4045731ddec21634146d536380057f6a26
 LVS Rule Deck  : sg13g2.lvs
 Layout GDS     : D:\Smacd Hackathon\gds\lna_top.gds
 Extracted CIR  : D:\Smacd Hackathon\gds\reports\lna_top_extracted.cir
-Execution Time : 3.1 seconds
-Timestamp (UTC): 2026-11-16T12:56:30.658432+00:00
+Execution Time : 3.3 seconds
+Timestamp (UTC): 2026-11-16T16:37:32.495624+00:00
 --------------------------------------------------------------------------------
 Extracted Primitive Devices in Physical Layout:
   - SiGe HBTs (npn13G2)             : 4 instances (Q1-Q4 RF cascodes, Q5-Q6 bias)
-  - Spiral Inductors (inductor3)    : 3 instances (Lg1, Lint, Ld2 2-turn coils)
-  - RF MIM Capacitors (rfcmim)      : 4 instances (Cin, Cint, Cout, Cbyp)
-  - Polysilicon Resistors (rhigh)   : 2 instances (Rbias1, Rbias2)
+  - Spiral Inductors (inductor3)    : 10 instances (Lg1, Lint, Ld2 2-turn coils)
+  - RF MIM Capacitors (rfcmim)      : 10 instances (Cin, Cint, Cout, Cbyp)
+  - Polysilicon Resistors (rhigh)   : 4 instances (Rbias1, Rbias2)
 --------------------------------------------------------------------------------
 Comparison Result: PASS (Netlists Match)
 OVERALL STATUS: LVS CLEAN / ZERO MISMATCHES (LVS PASSED)
