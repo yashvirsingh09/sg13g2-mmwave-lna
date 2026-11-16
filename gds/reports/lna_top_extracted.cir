@@ -1,14 +1,14 @@
-* Extracted by KLayout with SG13G2 LVS runset on : 16/11/2026 17:03
+* Extracted by KLayout with SG13G2 LVS runset on : 16/11/2026 17:38
 
 .SUBCKT lna_top GND LA LA$1 LA$2 LB LB|VCC LC LC$1 LC$2 RFIN RFOUT VBIAS1 VBIAS2
-Q$1 \$3 LB GND GND npn13G2 we=70n le=900n Nx=1 m=1
-Q$2 \$5 \$4 GND GND npn13G2 we=70n le=900n Nx=1 m=1
-Q$3 LA$1 VBIAS1 \$3 GND npn13G2 we=70n le=900n Nx=1 m=1
-Q$4 LA$2 VBIAS2 \$5 GND npn13G2 we=70n le=900n Nx=1 m=1
+Q$1 \$1904 LB GND GND npn13G2 we=70n le=900n Nx=1 m=1
+Q$2 \$1906 \$1905 GND GND npn13G2 we=70n le=900n Nx=1 m=1
+Q$3 LA$1 VBIAS1 \$1904 GND npn13G2 we=70n le=900n Nx=1 m=1
+Q$4 LA$2 VBIAS2 \$1906 GND npn13G2 we=70n le=900n Nx=1 m=1
 R$5 LB VBIAS1 GND rhigh w=0.5u l=0.96u ps=0u b=0 m=1
-R$6 \$4 VBIAS2 GND rhigh w=0.5u l=0.96u ps=0u b=0 m=1
+R$6 \$1905 VBIAS2 GND rhigh w=0.5u l=0.96u ps=0u b=0 m=1
 C$7 RFIN LA GND rfcmim w=7u l=7u A=49p P=28u m=1 wfeed=3u
-C$8 LA$1 \$4 GND rfcmim w=7u l=7u A=49p P=28u m=1 wfeed=3u
+C$8 LA$1 \$1905 GND rfcmim w=7u l=7u A=49p P=28u m=1 wfeed=3u
 C$9 LA$2 RFOUT GND rfcmim w=7u l=7u A=49p P=28u m=1 wfeed=3u
 C$10 LB|VCC GND GND rfcmim w=7u l=7u A=49p P=28u m=2 wfeed=3u
 L$12 LA LC LB GND inductor3 w=2u s=2.1u d=25.85u nr_r=2

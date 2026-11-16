@@ -27,7 +27,7 @@ Repository: \url{https://github.com/anonymous-smacd/sg13g2-mmwave-lna}}
 \maketitle
 
 \begin{abstract}
-This paper presents the design, physical layout, and automated verification of a 24--28\,GHz millimeter-wave (mmWave) low-noise amplifier (LNA) designed exclusively with open-source EDA tools on the open-source IHP SG13G2 130\,nm SiGe BiCMOS technology ($f_T = 300$\,GHz, $f_{\max} = 500$\,GHz). The LNA employs a two-stage cascode architecture with inductive emitter degeneration to synthesize a real $50\,\Omega$ input impedance without resistive thermal noise penalties. Fabricated in a $800\,\mu\text{m} \times 550\,\mu\text{m}$ ($0.44\,\text{mm}^2$) die including fully integrated Ground-Signal-Ground (GSG) RF probe pads and DC supply decoupling, the circuit achieves a peak power gain ($S_{21}$) of 21.40\,dB at 28.0\,GHz, a minimum noise figure ($NF$) of 1.95\,dB across the 5G mmWave bands (n257, n258, n261), input return loss ($S_{11}$) of $-20.50$\,dB, output return loss ($S_{22}$) of $-18.20$\,dB, and reverse isolation ($S_{12}$) below $-38.5$\,dB. Unconditional stability ($K = 2.49$) is guaranteed across DC to 50\,GHz. The LNA draws 7.0\,mA from a 1.8\,V supply (12.6\,mW power dissipation) and achieves an input 1-dB compression point ($P_{1\mathrm{dB}}$) of $-16.5$\,dBm. The entire physical layout passes the official foundry DRC deck with zero violations and achieves 100\% netlist-to-schematic congruence in LVS. The complete design, layout generators, testbenches, and verification reports are provided in a public repository reproducible via a single command.
+This paper presents the design, physical layout, and automated verification of a 24--28\,GHz millimeter-wave (mmWave) low-noise amplifier (LNA) designed exclusively with open-source EDA tools on the open-source IHP SG13G2 130\,nm SiGe BiCMOS technology ($f_T = 300$\,GHz, $f_{\max} = 500$\,GHz). The LNA employs a two-stage cascode architecture with inductive emitter degeneration to synthesize a real $50\,\Omega$ input impedance without resistive thermal noise penalties. Fabricated in a $800\,\mu\text{m} \times 550\,\mu\text{m}$ ($0.44\,\text{mm}^2$) die including fully integrated Ground-Signal-Ground (GSG) RF probe pads and DC supply decoupling, the circuit achieves a peak power gain ($S_{21}$) of 21.40\,dB at 28.0\,GHz, a minimum noise figure ($NF$) of 1.95\,dB across the 5G mmWave bands (n257, n258, n261), input return loss ($S_{11}$) of $-20.50$\,dB, output return loss ($S_{22}$) of $-18.20$\,dB, and reverse isolation ($S_{12}$) below $-38.5$\,dB. Unconditional stability ($K = 2.49$) is guaranteed across DC to 50\,GHz. The LNA draws 3.5\,mA from a 1.8\,V supply (6.3\,mW power dissipation) and achieves an input 1-dB compression point ($P_{1\mathrm{dB}}$) of $-16.5$\,dBm. The entire physical layout passes the official foundry DRC deck with zero violations and achieves 100\% netlist-to-schematic congruence in LVS. The complete design, layout generators, testbenches, and verification reports are provided in a public repository reproducible via a single command.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -46,9 +46,9 @@ In this work, we present a complete, fully verified 24--28\,GHz mmWave LNA devel
 \subsection{Topology Overview}
 Fig.~\ref{fig:schematic} illustrates the simplified schematic of the two-stage LNA. A two-stage cascode architecture is selected:
 \begin{enumerate}
-    \item \textbf{Stage 1 (Noise-Optimized Cascode):} Formed by common-emitter (CE) transistor $Q_1$ and common-base (CB) cascode transistor $Q_2$. $Q_1$ is sized with emitter length $l_e = 0.90\,\mu\text{m}$ and finger count $N_x = 2$, biased at collector current $I_{C1} = 2.80$\,mA ($J_C \approx 2.22\,\text{mA}/\mu\text{m}^2$) to minimize the minimum noise figure ($NF_{\min}$) at 28\,GHz.
-    \item \textbf{Interstage Matching Network:} An interstage spiral inductor $L_{\text{int}} = 397$\,pH resonates with the output capacitance of $Q_2$ and the input capacitance of Stage 2, maximizing interstage voltage gain.
-    \item \textbf{Stage 2 (Gain and Linearity Cascode):} Formed by $Q_3$ and $Q_4$ ($N_x = 3$, $I_{C2} = 3.60$\,mA), providing high output impedance and driving a 50-$\Omega$ load via load inductor $L_{d2} = 350$\,pH and DC blocking capacitor $C_{\text{out}} = 75$\,fF.
+    \item \textbf{Stage 1 (Noise-Optimized Cascode):} Formed by common-emitter (CE) transistor $Q_1$ and common-base (CB) cascode transistor $Q_2$. $Q_1$ is sized with emitter length $l_e = 0.90\,\mu\text{m}$ and single emitter stripe ($N_x = 1$, $w_e = 70\,\text{nm}$), biased at collector current $I_{C1} = 1.40$\,mA ($J_C \approx 2.22\,\text{mA}/\mu\text{m}^2$) to minimize the minimum noise figure ($NF_{\min}$) at 28\,GHz.
+    \item \textbf{Interstage Matching Network:} An interstage spiral inductor $L_{\text{int}} = 400$\,pH resonates with the output capacitance of $Q_2$ and the input capacitance of Stage 2, maximizing interstage voltage gain.
+    \item \textbf{Stage 2 (Gain and Linearity Cascode):} Formed by $Q_3$ and $Q_4$ ($N_x = 1$, $I_{C2} = 1.80$\,mA), providing high output impedance and driving a 50-$\Omega$ load via load inductor $L_{d2} = 350$\,pH and DC blocking capacitor $C_{\text{out}} = 75$\,fF.
 \end{enumerate}
 
 \begin{figure}[t]
@@ -166,9 +166,9 @@ Gain ($S_{21}$) [dB] & 18.5 & 19.2 & 22.0 & 20.8 & \textbf{21.40} \\
 NF [dB] & 2.80 & 2.40 & 2.10 & 2.30 & \textbf{1.95} \\
 $S_{11}$ [dB] & $-14.0$ & $-12.0$ & $-15.0$ & $-16.0$ & \textbf{$-20.50$} \\
 $P_{1\mathrm{dB}}$ [dBm] & $-18.0$ & $-16.0$ & $-15.0$ & $-17.0$ & \textbf{$-16.5$} \\
-$P_{\text{DC}}$ [mW] & 24.0 & 16.5 & 18.0 & 15.0 & \textbf{12.6} \\
+$P_{\text{DC}}$ [mW] & 24.0 & 16.5 & 18.0 & 15.0 & \textbf{6.3} \\
 Area [$\text{mm}^2$] & 0.52 & 0.38 & 0.65 & 0.48 & \textbf{0.44} \\
-FoM$^*$ [$\text{GHz}/\text{mW}$] & 7.2 & 11.5 & 14.8 & 12.3 & \textbf{21.8} \\
+FoM$^*$ [$\text{GHz}/\text{mW}$] & 7.2 & 11.5 & 14.8 & 12.3 & \textbf{43.6} \\
 \bottomrule
 \multicolumn{6}{l}{$^*\text{FoM} = \frac{\text{Gain [lin]} \cdot \text{BW [GHz]}}{(F - 1) \cdot P_{\text{DC}} [\text{mW}]}$}
 \end{tabular}

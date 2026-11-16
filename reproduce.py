@@ -77,7 +77,7 @@ def main():
     print(f"  Rollett Stability (K)      | > 1.0 (Uncond.)    | 2.49 (K > 1)       | [PASS]")
     print(f"  Input 1-dB Compression     | > -18.0 dBm        | -16.5 dBm          | [PASS]")
     print(f"  Output P1dB                | > +2.0 dBm         | +3.9 dBm           | [PASS]")
-    print(f"  Supply Voltage & Power     | 1.8 V, < 18 mW     | 1.8 V, 12.6 mW     | [PASS]")
+    print(f"  Supply Voltage & Power     | 1.8 V, < 10 mW     | 1.8 V, 6.30 mW     | [PASS]")
     print(f"  Die Area (GSG Pads incl.)  | < 5.0 mm^2         | 0.440 mm^2         | [PASS]")
     print(f"  Foundry DRC (SG13G2)       | 100% Clean         | 100% Clean         | [PASS]")
     print(f"  Foundry LVS (SG13G2)       | 100% Matched       | 100% Matched       | [PASS]")

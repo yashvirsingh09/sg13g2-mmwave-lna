@@ -5,6 +5,7 @@
 * ==============================================================================
 
 .include ../lna_top.spice
+.include ihp_models_portable.spice
 
 * Power Supply
 VCC VCC 0 DC 1.8

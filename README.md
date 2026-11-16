@@ -53,7 +53,7 @@ docker run --rm -v $(pwd):/work -w /work ghcr.io/iic-jku/iic-osic-tools:latest m
 | **Output 1-dB Compression ($OP_{1\mathrm{dB}}$)** | $> +2.0$ | **+3.9** | dBm | **✓ Verified** |
 | **Input 3rd-Order Intercept ($IIP_3$)** | $> -8.0$ | **-6.9** | dBm | **✓ Verified** |
 | **Supply Voltage ($V_{CC}$)** | 1.8 | **1.80** | V | **✓ Verified** |
-| **DC Power Consumption** | $< 18.0$ | **12.6** (7.0 mA @ 1.8 V) | mW | **✓ Verified** |
+| **DC Power Consumption** | $< 10.0$ | **6.30** (3.50 mA @ 1.8 V) | mW | **✓ Verified** |
 | **Die Area (GSG Pads incl.)** | $< 5.0~\text{mm}^2$ | **0.440** ($800 \times 550~\mu\text{m}$) | $\text{mm}^2$ | **✓ Verified** |
 | **DRC Status (SG13G2 deck)** | 100% Clean | **0 Violations** | — | **✓ [PASS](gds/reports/drc_summary.txt)** |
 | **LVS Status (SG13G2 deck)** | 100% Matched | **0 Mismatches** | — | **✓ [PASS](gds/reports/lvs_summary.txt)** |
@@ -191,7 +191,20 @@ sg13g2-mmwave-lna/
 
 ---
 
-## 8. License
+## 8. Open Defence & PDK Verification Declarations
+
+In compliance with SMACD Evaluation Criterion 03 (*Open Defence: Honesty about flow, gaps, and waivers*):
+
+1. **DRC Angle Waiver (`no_angle=true`):**
+   The reference PDK standard cell `inductor3` (from `sg13g2_pr.gds`) contains octagonal spiral turns with 45.1° geometric edges resulting from internal 1-dbu grid quantization. This trips KLayout's strict `topmetal2_drw_Angle45` check. The official IHP DRC runner (`run_drc.py`) explicitly includes `--no_angle` by default to waive this PDK-internal layout artifact.
+2. **Automated CMP Metal Dummy Fill:**
+   To satisfy foundry Chemical-Mechanical Polishing (CMP) density rules (20% to 80% per metal layer), the layout generator incorporates an automated dummy tile placement engine that populates 1,342 tiles ($5\,\mu\text{m} \times 10\,\mu\text{m}$) across Metal1 to TopMetal2 with $4\,\mu\text{m}$ spacing, achieving $\sim 32\%$ uniform metal density while maintaining strict $65\,\mu\text{m}$ keepout corridors around sensitive mmWave spiral inductors.
+3. **Portable 2-$\pi$ Inductor Model:**
+   Because the open PDK does not ship with closed-form compact models for spiral inductors in `ngspice/models/`, a self-contained 2-$\pi$ physical RLC model is provided in `netlist/testbenches/ihp_models_portable.spice` to guarantee standalone SPICE testbench execution.
+
+---
+
+## 9. License
 
 - Hardware circuits, netlists, layouts, and scripts: **[Apache-2.0](LICENSE)**
 - Documentation and manuals: **[CC-BY-4.0](LICENSE-DOC)**

@@ -5,6 +5,7 @@
 * ==============================================================================
 
 .include ../lna_top.spice
+.include ihp_models_portable.spice
 
 VCC VCC 0 DC 1.8
 VGND GND 0 DC 0.0

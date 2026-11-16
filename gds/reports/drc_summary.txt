@@ -9,7 +9,7 @@ Layout GDS       : D:\Smacd Hackathon\gds\lna_top.gds
 Die Size         : 800 um x 550 um (0.44 mm^2 <= 5.0 mm^2 limit)
 Total Violations : 0
 Execution Time   : 4.6 seconds
-Timestamp (UTC)  : 2026-11-16T11:33:34.973489+00:00
+Timestamp (UTC)  : 2026-11-16T12:08:00.841268+00:00
 --------------------------------------------------------------------------------
 DRC Results Summary:
   [PASS] 0 Violations found across all active, passive, and BEOL rules.
