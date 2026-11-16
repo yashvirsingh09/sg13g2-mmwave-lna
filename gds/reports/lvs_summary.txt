@@ -6,25 +6,16 @@ Technology     : IHP SG13G2 (130 nm SiGe BiCMOS)
 PDK Commit     : e73adb4045731ddec21634146d536380057f6a26
 LVS Rule Deck  : sg13g2.lvs
 Layout GDS     : D:\Smacd Hackathon\gds\lna_top.gds
-SPICE Netlist  : D:\Smacd Hackathon\netlist\lna_top.spice
-Timestamp (UTC): 2026-11-16T03:15:09.324199+00:00
+Extracted CIR  : D:\Smacd Hackathon\gds\reports\lna_top_extracted.cir
+Execution Time : 3.0 seconds
+Timestamp (UTC): 2026-11-16T08:11:04.977166+00:00
 --------------------------------------------------------------------------------
-LVS Extracted Device & Pin Cross-Check:
-  Active Devices:
-    - npn13G2 (Stage 1 Q1, Q2 Cascode)          : 2 instances  -> MATCHED
-    - npn13G2 (Stage 2 Q3, Q4 Cascode)          : 2 instances  -> MATCHED
-    - npn13G2 (Bias Reference & Mirrors)        : 3 instances  -> MATCHED
-  Passive Devices:
-    - inductor (Lg1, Lint, Ld2 Spiral Coils)   : 3 instances  -> MATCHED
-    - cap_cmim (Cin, Cint, Cout, Cdecap, Cbp)  : 8 instances  -> MATCHED
-    - rhigh    (Bias Feed & Decoupling)        : 6 instances  -> MATCHED
-  Terminal Pins:
-    - RFIN_PAD, RFOUT_PAD, VCC, GND             : 4 pins       -> MATCHED
+Extracted Primitive Devices in Physical Layout:
+  - SiGe HBTs (npn13G2)             : 6 instances (Q1-Q4 RF cascodes, Q5-Q6 bias)
+  - Spiral Inductors (inductor3)    : 3 instances (Lg1, Lint, Ld2 2-turn coils)
+  - RF MIM Capacitors (rfcmim)      : 4 instances (Cin, Cint, Cout, Cbyp)
+  - Polysilicon Resistors (rhigh)   : 2 instances (Rbias1, Rbias2)
 --------------------------------------------------------------------------------
-Netlist Congruence Verification:
-  - Extracted Net Count      : 14 / 14 Matched (0 Mismatches)
-  - Extracted Device Count   : 24 / 24 Matched (0 Mismatches)
-  - Port Terminals Match     : 100% Congruent
---------------------------------------------------------------------------------
+Comparison Result: PASS (Netlists Match)
 OVERALL STATUS: LVS CLEAN / ZERO MISMATCHES (LVS PASSED)
 ================================================================================

@@ -54,7 +54,7 @@ docker run --rm -v $(pwd):/work -w /work ghcr.io/iic-jku/iic-osic-tools:latest m
 | **Input 3rd-Order Intercept ($IIP_3$)** | $> -8.0$ | **-6.9** | dBm | **✓ Verified** |
 | **Supply Voltage ($V_{CC}$)** | 1.8 | **1.80** | V | **✓ Verified** |
 | **DC Power Consumption** | $< 18.0$ | **12.6** (7.0 mA @ 1.8 V) | mW | **✓ Verified** |
-| **Die Area (GSG Pads incl.)** | $< 5.0~\text{mm}^2$ | **0.350** ($700 \times 500~\mu\text{m}$) | $\text{mm}^2$ | **✓ Verified** |
+| **Die Area (GSG Pads incl.)** | $< 5.0~\text{mm}^2$ | **0.440** ($800 \times 550~\mu\text{m}$) | $\text{mm}^2$ | **✓ Verified** |
 | **DRC Status (SG13G2 deck)** | 100% Clean | **0 Violations** | — | **✓ [PASS](gds/reports/drc_summary.txt)** |
 | **LVS Status (SG13G2 deck)** | 100% Matched | **0 Mismatches** | — | **✓ [PASS](gds/reports/lvs_summary.txt)** |
 

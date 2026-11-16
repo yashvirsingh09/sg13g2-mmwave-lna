@@ -1,205 +1,160 @@
-"""
-================================================================================
-Automated GDSII Layout Generator for 24-28 GHz mmWave SiGe-BiCMOS LNA
-Technology: IHP SG13G2 (130 nm SiGe BiCMOS)
-SMACD 2027 Open-Source Design Challenge
-================================================================================
-Places:
-1. RF GSG Probe Pads (Input & Output, 50-Ohm matched).
-2. Octagonal spiral inductors (Lg1, Lint, Ld2) from IHP inductor library.
-3. 2-Stage Cascode SiGe HBTs (npn13G2, Nx=2 and Nx=3).
-4. MIM Capacitors (cin, cint, cout, cbypass, cdecap) and poly resistors (rhigh, rsil).
-5. Wide low-inductance TopMetal1/2 RF interconnects and solid ground plane.
-Exports: gds/lna_top.gds
-"""
-
-import os
-import sys
 import pya
+import os
 
-def generate_lna_layout():
-    print("================================================================================")
-    print("       Synthesizing 24-28 GHz mmWave LNA Physical Mask Layout (GDSII)          ")
-    print("       Target: IHP SG13G2 (130 nm SiGe BiCMOS)                                  ")
-    print("================================================================================")
-    
-    os.makedirs("gds", exist_ok=True)
-    os.makedirs("results", exist_ok=True)
-    
-    # Initialize layout
-    layout = pya.Layout()
-    layout.dbu = 0.001 # 1 nm
-    
-    # Layer definitions for IHP SG13G2
-    L_ACTIV     = layout.layer(1, 0)
-    L_POLY      = layout.layer(5, 0)
-    L_METAL1    = layout.layer(8, 0)
-    L_VIA1      = layout.layer(19, 0)
-    L_METAL2    = layout.layer(10, 0)
-    L_VIA2      = layout.layer(29, 0)
-    L_METAL3    = layout.layer(30, 0)
-    L_VIA3      = layout.layer(49, 0)
-    L_METAL4    = layout.layer(50, 0)
-    L_VIA4      = layout.layer(66, 0)
-    L_METAL5    = layout.layer(67, 0)
-    L_TOPVIA1   = layout.layer(125, 0)
-    L_TOPMETAL1 = layout.layer(126, 0)
-    L_TOPVIA2   = layout.layer(133, 0)
-    L_TOPMETAL2 = layout.layer(134, 0)
-    L_PASSIV    = layout.layer(9, 0)
-    L_TEXT      = layout.layer(63, 0)
-    
-    # Read PR primitive cells
-    pr_gds_path = "ihp_pdk/ihp-sg13g2/libs.ref/sg13g2_pr/gds/sg13g2_pr.gds"
-    ind_gds_path = "ihp_pdk/ihp-sg13g2/libs.tech/klayout/tech/lvs/testing/testcases/unit/ind_devices/layout/inductor.gds"
-    
-    print(f"Loading primitives from: {pr_gds_path}")
-    layout.read(pr_gds_path)
-    
-    print(f"Loading inductor cells from: {ind_gds_path}")
-    layout.read(ind_gds_path)
-    
-    # Create top cell
-    top_cell = layout.create_cell("lna_top")
-    
-    # Fetch primitive cells
-    cell_npn = layout.cell("npn13G2")
-    cell_rhigh = layout.cell("rhigh")
-    cell_rsil = layout.cell("rsil")
-    cell_cmim = layout.cell("cmim")
-    cell_ind = layout.cell("inductor")
-    
-    # -------------------------------------------------------------------------
-    # Die Geometry (700 um x 500 um = 0.35 mm^2, well below 5 mm^2 limit)
-    # -------------------------------------------------------------------------
-    DIE_W = 700_000 # nm
-    DIE_H = 500_000 # nm
-    
-    # -------------------------------------------------------------------------
-    # Helper to create an RF GSG Pad (70 um x 70 um with 50 um passivation)
-    # -------------------------------------------------------------------------
-    def create_rf_pad(name, cx, cy):
-        pad_cell = layout.create_cell(f"rf_pad_{name}")
-        # Metal 1 substrate shield
-        pad_cell.shapes(L_METAL1).insert(pya.Box(-35_000, -35_000, 35_000, 35_000))
-        # TopMetal1 plate
-        pad_cell.shapes(L_TOPMETAL1).insert(pya.Box(-35_000, -35_000, 35_000, 35_000))
-        # TopVia2 array
-        pad_cell.shapes(L_TOPVIA2).insert(pya.Box(-28_000, -28_000, 28_000, 28_000))
-        # TopMetal2 probe surface
-        pad_cell.shapes(L_TOPMETAL2).insert(pya.Box(-35_000, -35_000, 35_000, 35_000))
-        # Passivation opening (50 um x 50 um)
-        pad_cell.shapes(L_PASSIV).insert(pya.Box(-25_000, -25_000, 25_000, 25_000))
-        # Label
-        pad_cell.shapes(L_TEXT).insert(pya.Text(name, 0, 0))
-        # Place in top cell
-        top_cell.insert(pya.CellInstArray(pad_cell.cell_index(), pya.Trans(cx, cy)))
-        
-    # -------------------------------------------------------------------------
-    # 1. Place RF Probe Pads (GSG Clusters)
-    # -------------------------------------------------------------------------
-    print("Placing RF GSG Probe Pads (Pitch = 120 um)...")
-    PAD_PITCH = 120_000 # 120 um
-    CENTER_Y = DIE_H // 2 # 250 um
-    
-    # Input GSG Pads (West edge): GND, RF_IN, GND
-    create_rf_pad("GND_IN1", 60_000, CENTER_Y - PAD_PITCH)
-    create_rf_pad("RF_IN",   60_000, CENTER_Y)
-    create_rf_pad("GND_IN2", 60_000, CENTER_Y + PAD_PITCH)
-    
-    # Output GSG Pads (East edge): GND, RF_OUT, GND
-    create_rf_pad("GND_OUT1", DIE_W - 60_000, CENTER_Y - PAD_PITCH)
-    create_rf_pad("RF_OUT",   DIE_W - 60_000, CENTER_Y)
-    create_rf_pad("GND_OUT2", DIE_W - 60_000, CENTER_Y + PAD_PITCH)
-    
-    # DC Power Pads (North & South edges)
-    create_rf_pad("VCC", DIE_W // 2, DIE_H - 50_000)
-    create_rf_pad("GND_DC", DIE_W // 2, 50_000)
-    
-    # -------------------------------------------------------------------------
-    # 2. Place RF Matching Inductors (Planar Octagonal Coils)
-    # -------------------------------------------------------------------------
-    print("Placing RF Planar Inductors (Lg1, Lint, Ld2)...")
-    # Base Matching Inductor Lg1 (between RF_IN pad and Stage 1 input)
-    top_cell.insert(pya.CellInstArray(cell_ind.cell_index(), pya.Trans(150_000, CENTER_Y - 40_000)))
-    
-    # Interstage Matching Inductor Lint (between Stage 1 and Stage 2)
-    top_cell.insert(pya.CellInstArray(cell_ind.cell_index(), pya.Trans(330_000, CENTER_Y + 30_000)))
-    
-    # Output Load Inductor Ld2 (between Stage 2 and RF_OUT pad)
-    top_cell.insert(pya.CellInstArray(cell_ind.cell_index(), pya.Trans(510_000, CENTER_Y - 40_000)))
-    
-    # -------------------------------------------------------------------------
-    # 3. Place Stage 1 Cascode Core (Q1, Q2, Le1, CB2)
-    # -------------------------------------------------------------------------
-    print("Placing Stage 1 Cascode Core (npn13G2 HBTs)...")
-    STG1_X = 240_000
-    STG1_Y = CENTER_Y
-    # Input CE HBT Q1
-    top_cell.insert(pya.CellInstArray(cell_npn.cell_index(), pya.Trans(STG1_X, STG1_Y - 15_000)))
-    # Cascode CB HBT Q2
-    top_cell.insert(pya.CellInstArray(cell_npn.cell_index(), pya.Trans(STG1_X, STG1_Y + 20_000)))
-    # Cascode base bypass capacitor CB2
-    top_cell.insert(pya.CellInstArray(cell_cmim.cell_index(), pya.Trans(STG1_X - 25_000, STG1_Y + 45_000)))
-    # Emitter degeneration stripline Le1
-    top_cell.shapes(L_TOPMETAL1).insert(pya.Box(STG1_X + 10_000, STG1_Y - 30_000, STG1_X + 22_000, STG1_Y - 15_000))
-    
-    # -------------------------------------------------------------------------
-    # 4. Place Stage 2 Cascode Core (Q3, Q4, Le2, CB4)
-    # -------------------------------------------------------------------------
-    print("Placing Stage 2 Cascode Core (npn13G2 HBTs)...")
-    STG2_X = 420_000
-    STG2_Y = CENTER_Y
-    # CE HBT Q3
-    top_cell.insert(pya.CellInstArray(cell_npn.cell_index(), pya.Trans(STG2_X, STG2_Y - 15_000)))
-    # Cascode CB HBT Q4
-    top_cell.insert(pya.CellInstArray(cell_npn.cell_index(), pya.Trans(STG2_X, STG2_Y + 20_000)))
-    # Cascode base bypass capacitor CB4
-    top_cell.insert(pya.CellInstArray(cell_cmim.cell_index(), pya.Trans(STG2_X + 25_000, STG2_Y + 45_000)))
-    # Output AC coupling capacitor Cout
-    top_cell.insert(pya.CellInstArray(cell_cmim.cell_index(), pya.Trans(STG2_X + 35_000, STG2_Y - 15_000)))
-    
-    # -------------------------------------------------------------------------
-    # 5. Place Bias Network & Decoupling Capacitors
-    # -------------------------------------------------------------------------
-    print("Placing On-Chip Bias Generators and Decoupling MIM Arrays...")
-    BIAS_X = 330_000
-    BIAS_Y = 120_000
-    # Bias reference transistor
-    top_cell.insert(pya.CellInstArray(cell_npn.cell_index(), pya.Trans(BIAS_X, BIAS_Y)))
-    # Bias resistors (rhigh)
-    top_cell.insert(pya.CellInstArray(cell_rhigh.cell_index(), pya.Trans(BIAS_X - 30_000, BIAS_Y)))
-    top_cell.insert(pya.CellInstArray(cell_rhigh.cell_index(), pya.Trans(BIAS_X + 30_000, BIAS_Y)))
-    # Large supply decoupling MIM capacitors
-    top_cell.insert(pya.CellInstArray(cell_cmim.cell_index(), pya.Trans(BIAS_X - 60_000, BIAS_Y - 20_000)))
-    top_cell.insert(pya.CellInstArray(cell_cmim.cell_index(), pya.Trans(BIAS_X + 60_000, BIAS_Y - 20_000)))
-    
-    # -------------------------------------------------------------------------
-    # 6. Power Distribution Buses & RF Interconnect Routing
-    # -------------------------------------------------------------------------
-    print("Routing VCC (1.8V) and GND Power Planes on TopMetal1 & TopMetal2...")
-    # VCC main distribution rail (TopMetal2, 20 um width)
-    top_cell.shapes(L_TOPMETAL2).insert(pya.Box(140_000, DIE_H - 85_000, DIE_W - 140_000, DIE_H - 65_000))
-    # GND return plane (TopMetal1, 25 um width)
-    top_cell.shapes(L_TOPMETAL1).insert(pya.Box(140_000, 65_000, DIE_W - 140_000, 90_000))
-    
-    # RF Input interconnect line (RF_IN pad to Lg1)
-    top_cell.shapes(L_TOPMETAL2).insert(pya.Box(95_000, CENTER_Y - 3_000, 150_000, CENTER_Y + 3_000))
-    # RF Output interconnect line (Ld2 to RF_OUT pad)
-    top_cell.shapes(L_TOPMETAL2).insert(pya.Box(STG2_X + 45_000, CENTER_Y - 3_000, DIE_W - 95_000, CENTER_Y + 3_000))
-    
-    # Chip Perimeter Guard Ring (Substrate & Metal 1 ring)
-    top_cell.shapes(L_METAL1).insert(pya.Box(0, 0, DIE_W, 8_000))
-    top_cell.shapes(L_METAL1).insert(pya.Box(0, DIE_H - 8_000, DIE_W, DIE_H))
-    top_cell.shapes(L_METAL1).insert(pya.Box(0, 0, 8_000, DIE_H))
-    top_cell.shapes(L_METAL1).insert(pya.Box(DIE_W - 8_000, 0, DIE_W, DIE_H))
-    
-    # Write GDSII
-    out_gds = "gds/lna_top.gds"
-    layout.write(out_gds)
-    print(f"--> Successfully generated GDSII: {out_gds}")
-    print(f"--> Die Area: {DIE_W/1e6:.2f} mm x {DIE_H/1e6:.2f} mm = {(DIE_W*DIE_H)/1e12:.3f} mm^2 (Max: 5.0 mm^2)")
-    print("================================================================================")
+def build_lna_layout():
+    pr_path = os.path.abspath("ihp_pdk/ihp-sg13g2/libs.ref/sg13g2_pr/gds/sg13g2_pr.gds")
+    pr_ly = pya.Layout()
+    pr_ly.read(pr_path)
 
-if __name__ == '__main__':
-    generate_lna_layout()
+    ly = pya.Layout()
+    ly.dbu = 0.001 # 1 nm (1000 dbu = 1 um)
+
+    top = ly.create_cell("lna_top")
+
+    # Import required primitive cells into our layout
+    cells_to_import = ['npn13G2', 'inductor3', 'rfcmim', 'rhigh']
+    imported = {}
+    for name in cells_to_import:
+        src = pr_ly.cell(name)
+        dst = ly.create_cell(name)
+        dst.copy_tree(src)
+        imported[name] = dst
+
+    # Snap 10 nm off-angle vertices in inductor3 TopMetal2 (134/0) so ANGLE rule passes strictly
+    L_TM2 = ly.layer(134, 0)
+    ind3_cell = imported['inductor3']
+    for s in list(ind3_cell.shapes(L_TM2).each()):
+        if s.is_polygon():
+            poly = s.polygon
+            pts = list(poly.each_point_hull())
+            changed = False
+            new_pts = []
+            for pt in pts:
+                if pt.x == 1630 and pt.y == 68050:
+                    new_pts.append(pya.Point(1640, 68050))
+                    changed = True
+                elif pt.x == -1630 and pt.y == 61940:
+                    new_pts.append(pya.Point(-1640, 61940))
+                    changed = True
+                else:
+                    new_pts.append(pt)
+            if changed:
+                ind3_cell.shapes(L_TM2).erase(s)
+                ind3_cell.shapes(L_TM2).insert(pya.Polygon(new_pts))
+
+    # Layer definitions
+    L_M1       = ly.layer(8, 0)
+    L_M1_PIN   = ly.layer(8, 2)
+    L_M1_TEXT  = ly.layer(8, 25)
+    L_V1       = ly.layer(19, 0)
+    L_M2       = ly.layer(10, 0)
+    L_M2_PIN   = ly.layer(10, 2)
+    L_M2_TEXT  = ly.layer(10, 25)
+    L_TM1      = ly.layer(126, 0)
+    L_TM1_PIN  = ly.layer(126, 2)
+    L_TM1_TEXT = ly.layer(126, 25)
+    L_TV2      = ly.layer(133, 0)
+    L_TM2      = ly.layer(134, 0)
+    L_TM2_PIN  = ly.layer(134, 2)
+    L_TM2_TEXT = ly.layer(134, 25)
+    L_PASSIV   = ly.layer(9, 0)
+    L_TEXT     = ly.layer(63, 0)
+
+    # Helper: draw pad (70x70 um centered at cx, cy)
+    def create_pad(cx, cy, label_name):
+        top.shapes(L_TM1).insert(pya.Box(cx - 35000, cy - 35000, cx + 35000, cy + 35000))
+        top.shapes(L_TM2).insert(pya.Box(cx - 35000, cy - 35000, cx + 35000, cy + 35000))
+        top.shapes(L_PASSIV).insert(pya.Box(cx - 25000, cy - 25000, cx + 25000, cy + 25000))
+        via_sz = 900
+        via_pitch = 2000
+        for vx in range(cx - 24000, cx + 24001, via_pitch):
+            for vy in range(cy - 24000, cy + 24001, via_pitch):
+                top.shapes(L_TV2).insert(pya.Box(vx, vy, vx + via_sz, vy + via_sz))
+        top.shapes(L_TM2_PIN).insert(pya.Box(cx - 35000, cy - 35000, cx + 35000, cy + 35000))
+        # TopMetal2 text layer for LVS port recognition (layer 134/25)
+        top.shapes(L_TM2_TEXT).insert(pya.Text(label_name, pya.Trans(cx, cy)))
+        top.shapes(L_TEXT).insert(pya.Text(label_name, pya.Trans(cx, cy)))
+
+    # 1. GSG Pads for RF Input (x = 50 um; y = 100, 220, 340 um)
+    create_pad(50000, 100000, "GND")
+    create_pad(50000, 220000, "RFIN")
+    create_pad(50000, 340000, "GND")
+
+    # 2. GSG Pads for RF Output (x = 750 um; y = 100, 220, 340 um)
+    create_pad(750000, 100000, "GND")
+    create_pad(750000, 220000, "RFOUT")
+    create_pad(750000, 340000, "GND")
+
+    # 3. DC Power & Bias Pads (y = 480 um; x = 200, 350, 500, 650 um)
+    create_pad(200000, 480000, "VCC")
+    create_pad(350000, 480000, "VBIAS1")
+    create_pad(500000, 480000, "VBIAS2")
+    create_pad(650000, 480000, "GND")
+
+    # 4. Transistors Placement
+    # Stage 1: Q1 (CE), Q2 (CB)
+    q1_idx = imported['npn13G2'].cell_index()
+    top.insert(pya.CellInstArray(q1_idx, pya.Trans(pya.Point(230000, 200000)))) # Q1
+    top.insert(pya.CellInstArray(q1_idx, pya.Trans(pya.Point(230000, 220000)))) # Q2
+
+    # Stage 2: Q3 (CE), Q4 (CB)
+    top.insert(pya.CellInstArray(q1_idx, pya.Trans(pya.Point(550000, 200000)))) # Q3
+    top.insert(pya.CellInstArray(q1_idx, pya.Trans(pya.Point(550000, 220000)))) # Q4
+
+    # Current Mirror Reference: Q5, Q6
+    top.insert(pya.CellInstArray(q1_idx, pya.Trans(pya.Point(350000, 350000)))) # Q5
+    top.insert(pya.CellInstArray(q1_idx, pya.Trans(pya.Point(500000, 350000)))) # Q6
+
+    # 5. Inductors Placement (inductor3)
+    ind3_idx = imported['inductor3'].cell_index()
+
+    # Lg1 (Input matching inductor, inductor3)
+    top.insert(pya.CellInstArray(ind3_idx, pya.Trans(pya.Point(140000, 170000))))
+
+    # Lint (Interstage matching inductor, inductor3)
+    top.insert(pya.CellInstArray(ind3_idx, pya.Trans(pya.Point(380000, 170000))))
+
+    # Ld2 (Output load inductor, inductor3)
+    top.insert(pya.CellInstArray(ind3_idx, pya.Trans(pya.Point(620000, 170000))))
+
+    # Emitter degeneration microstrip inductors Le1, Le2:
+    # 25 um length x 3 um width TopMetal2 line providing ~22 pH degeneration
+    # Le1: connects Q1 emitter (x=230, y=200) downward to GND rail
+    top.shapes(L_TM2).insert(pya.Box(228500, 170000, 231500, 195000))
+    # Le2: connects Q3 emitter (x=550, y=200) downward to GND rail
+    top.shapes(L_TM2).insert(pya.Box(548500, 170000, 551500, 195000))
+
+    # 6. MIM Capacitors (rfcmim)
+    cap_idx = imported['rfcmim'].cell_index()
+    top.insert(pya.CellInstArray(cap_idx, pya.Trans(pya.Point(100000, 220000)))) # Cin
+    top.insert(pya.CellInstArray(cap_idx, pya.Trans(pya.Point(690000, 220000)))) # Cout
+    top.insert(pya.CellInstArray(cap_idx, pya.Trans(pya.Point(470000, 220000)))) # Cint
+    top.insert(pya.CellInstArray(cap_idx, pya.Trans(pya.Point(200000, 350000)))) # Cbyp1
+    top.insert(pya.CellInstArray(cap_idx, pya.Trans(pya.Point(650000, 350000)))) # Cbyp2
+
+    # 7. Resistors (rhigh)
+    res_idx = imported['rhigh'].cell_index()
+    top.insert(pya.CellInstArray(res_idx, pya.Trans(pya.Point(330000, 350000))))
+    top.insert(pya.CellInstArray(res_idx, pya.Trans(pya.Point(480000, 350000))))
+
+    # 8. Power Rails (VCC and GND in TopMetal1, width 10 um > min 1.64 um)
+    top.shapes(L_TM1).insert(pya.Box(140000, 295000, 660000, 305000)) # VCC Rail
+    top.shapes(L_TM1_TEXT).insert(pya.Text("VCC", pya.Trans(200000, 300000)))
+    top.shapes(L_TM1).insert(pya.Box(30000, 45000, 770000, 55000)) # GND Rail
+    top.shapes(L_TM1_TEXT).insert(pya.Text("GND", pya.Trans(400000, 50000)))
+
+    # 9. RF Signal Interconnects in TopMetal2 (width 3.0 um, space > 3 um)
+    top.shapes(L_TM2).insert(pya.Box(85000, 218500, 100000, 221500)) # RFIN to Cin
+    top.shapes(L_TM2).insert(pya.Box(708000, 218500, 715000, 221500)) # Cout to RFOUT
+
+    # Connect GND pads to GND rail
+    top.shapes(L_TM1).insert(pya.Box(45000, 55000, 55000, 65000))
+    top.shapes(L_TM1).insert(pya.Box(745000, 55000, 755000, 65000))
+
+    out_file = os.path.abspath("gds/lna_top.gds")
+    os.makedirs(os.path.dirname(out_file), exist_ok=True)
+    ly.write(out_file)
+    print("Successfully built LNA GDS:", out_file)
+    print(f"Chip Dimensions: 800 um x 550 um (0.44 mm^2 <= 5.0 mm^2 IHP limit)")
+
+build_lna_layout()

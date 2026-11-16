@@ -14,31 +14,35 @@
 VCC VCC 0 DC 1.8
 VGND GND 0 DC 0.0
 
-P1 IN_PAD 0 port=1 z0=50
-P2 OUT_PAD 0 port=2 z0=50
+* Port 1 Drive (50 Ohm source with 2.0V AC, giving 1.0V incident wave)
+VIN IN_SRC 0 DC 0 AC 2.0
+RS1 IN_SRC IN_PAD 50.0
+
+* Port 2 Termination (50 Ohm load)
+RL2 OUT_PAD 0 50.0
 
 XDUT IN_PAD OUT_PAD VCC GND lna_top
 
-.sp dec 50 20g 35g 1
+.ac dec 50 20g 35g
 
 .control
-* TT Run
+* TT Run (27 C, 1.8V)
 set temp = 27
 alter vcc = 1.80
 run
-let s21_tt = db(S_2_1)
+let s21_tt = db(v(out_pad))
 
-* FF Run
+* FF Run (-40 C, 1.98V)
 set temp = -40
 alter vcc = 1.98
 run
-let s21_ff = db(S_2_1)
+let s21_ff = db(v(out_pad))
 
-* SS Run
+* SS Run (85 C, 1.62V)
 set temp = 85
 alter vcc = 1.62
 run
-let s21_ss = db(S_2_1)
+let s21_ss = db(v(out_pad))
 
 write tb_corners.raw s21_tt s21_ff s21_ss frequency
 quit

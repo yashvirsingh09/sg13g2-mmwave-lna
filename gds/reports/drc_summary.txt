@@ -1,23 +1,18 @@
 ================================================================================
           SMACD 2027 Open-Source Design Challenge: DRC Verification Report       
 ================================================================================
-Design Name    : lna_top (24-28 GHz mmWave SiGe-BiCMOS LNA)
-Technology     : IHP SG13G2 (130 nm SiGe BiCMOS)
-PDK Commit     : e73adb4045731ddec21634146d536380057f6a26
-DRC Rule Deck  : ihp-sg13g2.drc
-Layout GDS     : D:\Smacd Hackathon\gds\lna_top.gds
-Die Size       : 700 um x 500 um (0.350 mm^2 <= 5 mm^2 limit)
-Execution Time : 7.9 seconds
-Timestamp (UTC): 2026-11-16T03:15:09.323273+00:00
+Design Name      : lna_top (24-28 GHz mmWave SiGe-BiCMOS LNA)
+Technology       : IHP SG13G2 (130 nm SiGe BiCMOS)
+PDK Commit       : e73adb4045731ddec21634146d536380057f6a26
+DRC Rule Deck    : ihp-sg13g2.drc
+Layout GDS       : D:\Smacd Hackathon\gds\lna_top.gds
+Die Size         : 800 um x 550 um (0.44 mm^2 <= 5.0 mm^2 limit)
+Total Violations : 0
+Execution Time   : 7.6 seconds
+Timestamp (UTC)  : 2026-11-16T08:10:59.043679+00:00
 --------------------------------------------------------------------------------
-DRC Rule Group Status:
-  [PASS] Active, Gate & Poly Enclosures : Clean
-  [PASS] SiGe HBT Primitive Cells       : Clean (npn13G2 foundry primitives)
-  [PASS] Planar Octagonal Inductors     : Clean (inductor library cells)
-  [PASS] MIM Capacitors (cmim)          : Clean (cap_cmim foundry primitives)
-  [PASS] Metal & Via Stacks (M1 to TM2) : Clean (TopMetal1 2um, TopMetal2 3um)
-  [PASS] RF GSG Probe Pads (70x70 um)   : Clean (Passivation 50x50 um, pitch 120 um)
-  [PASS] Chip Perimeter & Guard Ring    : Clean (Metal 1 substrate enclosure)
+DRC Results Summary:
+  [PASS] 0 Violations found across all active, passive, and BEOL rules.
 --------------------------------------------------------------------------------
-OVERALL STATUS: DRC CLEAN / COMPLIANT WITH IHP SG13G2 FOUNDRY SPECIFICATIONS
+OVERALL STATUS: DRC CLEAN / 100% COMPLIANT WITH IHP SG13G2 SPECIFICATIONS
 ================================================================================
