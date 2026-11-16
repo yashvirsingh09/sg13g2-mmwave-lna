@@ -100,7 +100,7 @@ The RF input and output interfaces employ Ground-Signal-Ground (GSG) probe pads 
 Physical verification was conducted using the official foundry rule decks in batch KLayout:
 \begin{enumerate}
     \item \textbf{DRC (\texttt{ihp-sg13g2.drc}):} Evaluated all active, poly, via, metal, and passivation rules in deep hierarchical mode. The layout passed with \textbf{0 violations} across all rule categories.
-    \item \textbf{LVS (\texttt{sg13g2.lvs}):} Extracted the physical layout down to individual devices ($6\times$ \texttt{npn13G2}, $3\times$ \texttt{inductor3}, $4\times$ \texttt{rfcmim}, $2\times$ \texttt{rhigh}) and verified exact network isomorphism against the golden schematic, reporting: \textit{``Congratulations! Netlists match.''}
+    \item \textbf{LVS (\texttt{sg13g2.lvs}):} Extracted the physical layout down to individual devices ($4\times$ \texttt{npn13G2}, $3\times$ \texttt{inductor3}, $4\times$ \texttt{rfcmim}, $2\times$ \texttt{rhigh}) and verified exact network isomorphism against the golden schematic, reporting: \textit{``Congratulations! Netlists match.''}
 \end{enumerate}
 
 \begin{figure}[t]

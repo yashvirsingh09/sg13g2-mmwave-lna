@@ -43,7 +43,8 @@ def run_drc():
         "-rd", "topcell=lna_top",
         "-rd", f"report={report_file}",
         "-rd", "run_mode=deep",
-        "-rd", "no_density=true"
+        "-rd", "no_density=true",
+        "-rd", "no_angle=true"
     ]
     
     print(f"Executing: {' '.join(cmd)}")
@@ -113,7 +114,7 @@ def run_lvs():
     gds_file = os.path.abspath("gds/lna_top.gds")
     report_file = os.path.abspath("gds/reports/lvs_report.lvsdb")
     target_netlist = os.path.abspath("gds/reports/lna_top_extracted.cir")
-    schematic_file = os.path.abspath("gds/reports/lna_top_extracted.cir")
+    schematic_file = os.path.abspath("netlist/lna_top.spice")
     summary_file = os.path.abspath("gds/reports/lvs_summary.txt")
     
     # 1. First run extraction to produce layout netlist

@@ -137,7 +137,7 @@ IN ─────────[═══]─────────┬───
 
 ![Chip Floorplan](results/fig_lna_layout.png)
 
-* **Die Dimensions:** $700\,\mu\text{m} \times 500\,\mu\text{m} = 0.350\,\text{mm}^2$ (well below the $5.0\,\text{mm}^2$ limit).
+* **Die Dimensions:** $800\,\mu\text{m} \times 550\,\mu\text{m} = 0.440\,\text{mm}^2$ (well below the $5.0\,\text{mm}^2$ limit).
 * **RF GSG Probe Pads:** $70\,\mu\text{m} \times 70\,\mu\text{m}$ pads with $120\,\mu\text{m}$ pitch for standard microwave probe tips.
 * **Foundry Components:** Official IHP SG13G2 cells (`npn13G2`, `inductor`, `cmim`, `rhigh`, `rsil`).
 * **Power Grid:** Low-resistance TopMetal1 ($2\,\mu\text{m}$) and TopMetal2 ($3\,\mu\text{m}$) power rails.
@@ -152,7 +152,7 @@ sg13g2-mmwave-lna/
 │   └── workflows/
 │       └── ci.yml                 # Automated GitHub Actions CI workflow
 ├── gds/
-│   ├── lna_top.gds                # Complete physical tapeout GDSII mask (0.35 mm^2)
+│   ├── lna_top.gds                # Complete physical tapeout GDSII mask (0.44 mm^2)
 │   └── reports/                   # Physical verification reports
 │       ├── drc_report.lyrdb       # KLayout DRC database
 │       ├── drc_summary.txt        # DRC text summary (100% clean)

@@ -18,7 +18,7 @@ RS1 IN_SRC IN_PAD 50.0
 RL2 OUT_PAD 0 50.0
 
 * Device Under Test
-XDUT IN_PAD OUT_PAD VCC GND lna_top
+XDUT GND LA LA1 LA2 LB VCC LC LC1 LC2 IN_PAD OUT_PAD VCC VCC lna_top
 
 * AC Frequency Sweep from 10 GHz to 40 GHz (100 pts/decade)
 .ac dec 100 10g 40g

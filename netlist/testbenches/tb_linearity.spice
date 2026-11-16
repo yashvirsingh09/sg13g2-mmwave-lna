@@ -14,7 +14,7 @@ VIN1 IN1 0 SIN(0 0.01 28.00g)
 VIN2 IN2 IN1 SIN(0 0.01 28.05g)
 R_SRC IN2 IN_DUT 50.0
 
-XDUT IN_DUT OUT_PAD VCC GND lna_top
+XDUT GND LA LA1 LA2 LB VCC LC LC1 LC2 IN_DUT OUT_PAD VCC VCC lna_top
 R_LOAD OUT_PAD 0 50.0
 
 * Transient simulation for FFT spectral intermodulation analysis
