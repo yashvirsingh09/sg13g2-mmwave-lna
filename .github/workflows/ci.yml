@@ -43,6 +43,8 @@ jobs:
           cd ..
 
       - name: Run End-to-End Verification Pipeline
+        env:
+          QT_QPA_PLATFORM: offscreen
         run: |
           python reproduce.py
 
