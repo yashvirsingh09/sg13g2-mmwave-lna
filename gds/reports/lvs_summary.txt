@@ -8,12 +8,12 @@ LVS Rule Deck  : sg13g2.lvs
 Layout GDS     : D:\Smacd Hackathon\gds\lna_top.gds
 Extracted CIR  : D:\Smacd Hackathon\gds\reports\lna_top_extracted.cir
 Execution Time : 3.3 seconds
-Timestamp (UTC): 2026-11-16T16:37:32.495624+00:00
+Timestamp (UTC): 2026-11-17T02:24:32.036575+00:00
 --------------------------------------------------------------------------------
 Extracted Primitive Devices in Physical Layout:
   - SiGe HBTs (npn13G2)             : 4 instances (Q1-Q4 RF cascodes, Q5-Q6 bias)
   - Spiral Inductors (inductor3)    : 10 instances (Lg1, Lint, Ld2 2-turn coils)
-  - RF MIM Capacitors (rfcmim)      : 10 instances (Cin, Cint, Cout, Cbyp)
+  - RF MIM Capacitors (rfcmim)      : 14 instances (Cin, Cint, Cout, Cbyp)
   - Polysilicon Resistors (rhigh)   : 4 instances (Rbias1, Rbias2)
 --------------------------------------------------------------------------------
 Comparison Result: PASS (Netlists Match)

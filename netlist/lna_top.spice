@@ -31,6 +31,11 @@ R4 VCC VB_CAS2 GND rhigh w=0.5u l=0.96u
 * --- MIM Capacitors ---
 * Input DC Blocking:
 C1 RFIN N_IN GND rfcmim w=7u l=7u wfeed=3u
+* Input Shunt Matching (4 series caps to GND):
+C_SH1 N_IN N_S1 GND rfcmim w=7u l=7u wfeed=3u
+C_SH2 N_S1 N_S2 GND rfcmim w=7u l=7u wfeed=3u
+C_SH3 N_S2 N_S3 GND rfcmim w=7u l=7u wfeed=3u
+C_SH4 N_S3 GND GND rfcmim w=7u l=7u wfeed=3u
 * Cascode Bypasses:
 C2 VB_CAS1 GND GND rfcmim w=7u l=7u wfeed=3u
 C3 VB_CAS2 GND GND rfcmim w=7u l=7u wfeed=3u

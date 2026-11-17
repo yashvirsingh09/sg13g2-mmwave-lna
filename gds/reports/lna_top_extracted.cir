@@ -1,9 +1,9 @@
-* Extracted by KLayout with SG13G2 LVS runset on : 16/11/2026 22:07
+* Extracted by KLayout with SG13G2 LVS runset on : 17/11/2026 07:54
 
 .SUBCKT lna_top B2 CAS1_MID CAS2_MID GND LA|LB LA|LB|N_INT LA|LB|N_L1
 + LA|LB|N_L2 LA|LB|N_L4 LA|LB|N_L5 LA|LB|N_OUT LA|N_IN LA|OUT1 LA|OUT2 LB|N_L3
-+ LB|VCC LC LC$1 LC$2 LC$3 LC$4 LC$5 LC$6 LC$7 LC$8 LC$9 N_CO1 N_CO2 N_CP RFIN
-+ RFOUT VBIAS1 VBIAS2 VB_CAS1 VB_CAS2
++ LB|VCC LC LC$1 LC$2 LC$3 LC$4 LC$5 LC$6 LC$7 LC$8 LC$9 N_CO1 N_CO2 N_CP N_S1
++ N_S2 N_S3 RFIN RFOUT VBIAS1 VBIAS2 VB_CAS1 VB_CAS2
 Q$1 CAS1_MID LA|LB GND GND npn13G2 we=70n le=900n Nx=1 m=2
 Q$3 LA|OUT1 VB_CAS1 CAS1_MID GND npn13G2 we=70n le=900n Nx=1 m=2
 Q$5 CAS2_MID B2 GND GND npn13G2 we=70n le=900n Nx=1 m=1
@@ -12,24 +12,28 @@ R$7 VBIAS1 LA|LB GND rhigh w=0.5u l=0.96u ps=0u b=0 m=1
 R$8 VBIAS2 B2 GND rhigh w=0.5u l=0.96u ps=0u b=0 m=1
 R$9 LB|VCC VB_CAS1 GND rhigh w=0.5u l=0.96u ps=0u b=0 m=1
 R$10 LB|VCC VB_CAS2 GND rhigh w=0.5u l=0.96u ps=0u b=0 m=1
-C$11 LA|OUT1 B2 GND rfcmim w=7u l=7u A=49p P=28u m=1 wfeed=3u
-C$12 N_CO1 N_CO2 GND rfcmim w=7u l=7u A=49p P=28u m=1 wfeed=3u
-C$13 N_CO2 RFOUT GND rfcmim w=7u l=7u A=49p P=28u m=1 wfeed=3u
-C$14 LA|OUT2 N_CP GND rfcmim w=7u l=7u A=49p P=28u m=1 wfeed=3u
-C$15 VB_CAS1 GND GND rfcmim w=7u l=7u A=49p P=28u m=1 wfeed=3u
-C$16 LA|OUT1 GND GND rfcmim w=7u l=7u A=49p P=28u m=1 wfeed=3u
-C$17 VB_CAS2 GND GND rfcmim w=7u l=7u A=49p P=28u m=1 wfeed=3u
-C$18 N_CP GND GND rfcmim w=7u l=7u A=49p P=28u m=1 wfeed=3u
-C$19 LA|OUT2 N_CO1 GND rfcmim w=7u l=7u A=49p P=28u m=1 wfeed=3u
-C$20 RFIN LA|N_IN GND rfcmim w=7u l=7u A=49p P=28u m=1 wfeed=3u
-L$21 LA|LB LC LA|LB|N_L5 GND inductor3 w=2u s=2.1u d=25.85u nr_r=2
-L$22 LA|LB|N_L5 LC$1 LA|LB|N_L4 GND inductor3 w=2u s=2.1u d=25.85u nr_r=2
-L$23 LA|LB|N_L4 LC$2 LB|N_L3 GND inductor3 w=2u s=2.1u d=25.85u nr_r=2
-L$24 LA|LB|N_INT LC$3 LB|VCC GND inductor3 w=2u s=2.1u d=25.85u nr_r=2
-L$25 LA|LB|N_OUT LC$4 LB|VCC GND inductor3 w=2u s=2.1u d=25.85u nr_r=2
-L$26 LA|N_IN LC$5 LA|LB|N_L1 GND inductor3 w=2u s=2.1u d=25.85u nr_r=2
-L$27 LA|LB|N_L1 LC$6 LA|LB|N_L2 GND inductor3 w=2u s=2.1u d=25.85u nr_r=2
-L$28 LA|LB|N_L2 LC$7 LB|N_L3 GND inductor3 w=2u s=2.1u d=25.85u nr_r=2
-L$29 LA|OUT1 LC$8 LA|LB|N_INT GND inductor3 w=2u s=2.1u d=25.85u nr_r=2
-L$30 LA|OUT2 LC$9 LA|LB|N_OUT GND inductor3 w=2u s=2.1u d=25.85u nr_r=2
+C$11 LA|OUT2 N_CO1 GND rfcmim w=7u l=7u A=49p P=28u m=1 wfeed=3u
+C$12 LA|OUT1 B2 GND rfcmim w=7u l=7u A=49p P=28u m=1 wfeed=3u
+C$13 N_S3 GND GND rfcmim w=7u l=7u A=49p P=28u m=1 wfeed=3u
+C$14 N_CO1 N_CO2 GND rfcmim w=7u l=7u A=49p P=28u m=1 wfeed=3u
+C$15 N_S2 N_S3 GND rfcmim w=7u l=7u A=49p P=28u m=1 wfeed=3u
+C$16 N_CO2 RFOUT GND rfcmim w=7u l=7u A=49p P=28u m=1 wfeed=3u
+C$17 LA|OUT1 GND GND rfcmim w=7u l=7u A=49p P=28u m=1 wfeed=3u
+C$18 VB_CAS2 GND GND rfcmim w=7u l=7u A=49p P=28u m=1 wfeed=3u
+C$19 VB_CAS1 GND GND rfcmim w=7u l=7u A=49p P=28u m=1 wfeed=3u
+C$20 N_CP GND GND rfcmim w=7u l=7u A=49p P=28u m=1 wfeed=3u
+C$21 LA|N_IN N_S1 GND rfcmim w=7u l=7u A=49p P=28u m=1 wfeed=3u
+C$22 RFIN LA|N_IN GND rfcmim w=7u l=7u A=49p P=28u m=1 wfeed=3u
+C$23 LA|OUT2 N_CP GND rfcmim w=7u l=7u A=49p P=28u m=1 wfeed=3u
+C$24 N_S1 N_S2 GND rfcmim w=7u l=7u A=49p P=28u m=1 wfeed=3u
+L$25 LA|LB LC LA|LB|N_L5 GND inductor3 w=2u s=2.1u d=25.85u nr_r=2
+L$26 LA|LB|N_L5 LC$1 LA|LB|N_L4 GND inductor3 w=2u s=2.1u d=25.85u nr_r=2
+L$27 LA|LB|N_L4 LC$2 LB|N_L3 GND inductor3 w=2u s=2.1u d=25.85u nr_r=2
+L$28 LA|LB|N_INT LC$3 LB|VCC GND inductor3 w=2u s=2.1u d=25.85u nr_r=2
+L$29 LA|LB|N_OUT LC$4 LB|VCC GND inductor3 w=2u s=2.1u d=25.85u nr_r=2
+L$30 LA|N_IN LC$5 LA|LB|N_L1 GND inductor3 w=2u s=2.1u d=25.85u nr_r=2
+L$31 LA|LB|N_L1 LC$6 LA|LB|N_L2 GND inductor3 w=2u s=2.1u d=25.85u nr_r=2
+L$32 LA|LB|N_L2 LC$7 LB|N_L3 GND inductor3 w=2u s=2.1u d=25.85u nr_r=2
+L$33 LA|OUT1 LC$8 LA|LB|N_INT GND inductor3 w=2u s=2.1u d=25.85u nr_r=2
+L$34 LA|OUT2 LC$9 LA|LB|N_OUT GND inductor3 w=2u s=2.1u d=25.85u nr_r=2
 .ENDS lna_top

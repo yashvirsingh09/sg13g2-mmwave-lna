@@ -274,8 +274,12 @@ def build_fully_wired_lna():
     top.insert(pya.CellInstArray(res_idx, pya.Trans(rbias2_pos)))
     top.insert(pya.CellInstArray(res_idx, pya.Trans(rcas2_pos)))
 
-    # Capacitors (10 rfcmim instances)
+    # Capacitors (14 rfcmim instances: Cin, Csh1-4, Cbyp1-2, Ctune1, Cint, Cpout1-2, Cout1-3)
     cin_pos    = pya.Point(100000, 220000)
+    csh1_pos   = pya.Point(100000, 195000)
+    csh2_pos   = pya.Point(100000, 170000)
+    csh3_pos   = pya.Point(100000, 145000)
+    csh4_pos   = pya.Point(100000, 120000)
     cbyp1_pos  = pya.Point(285000, 150000)
     cbyp2_pos  = pya.Point(510000, 150000)
     ctune1_pos = pya.Point(420000, 190000)
@@ -287,6 +291,10 @@ def build_fully_wired_lna():
     cout3_pos  = pya.Point(680000, 120000)
 
     top.insert(pya.CellInstArray(cap_idx, pya.Trans(cin_pos)))
+    top.insert(pya.CellInstArray(cap_idx, pya.Trans(csh1_pos)))
+    top.insert(pya.CellInstArray(cap_idx, pya.Trans(csh2_pos)))
+    top.insert(pya.CellInstArray(cap_idx, pya.Trans(csh3_pos)))
+    top.insert(pya.CellInstArray(cap_idx, pya.Trans(csh4_pos)))
     top.insert(pya.CellInstArray(cap_idx, pya.Trans(cbyp1_pos)))
     top.insert(pya.CellInstArray(cap_idx, pya.Trans(cbyp2_pos)))
     top.insert(pya.CellInstArray(cap_idx, pya.Trans(ctune1_pos)))
@@ -311,7 +319,7 @@ def build_fully_wired_lna():
     # --- NET: RFIN (RFIN Pad -> Cin PLUS plate) ---
     top.shapes(L_TM1).insert(pya.Box(80000, 222500, 96000, 224500))
 
-    # --- NET: N_IN (Cin MINUS plate -> Lg0 LA) ---
+    # --- NET: N_IN (Cin MINUS plate -> Lg0 LA & Csh1 PLUS plate) ---
     stack_m5_to_tm1(111600, 223500)
     top.shapes(L_TM1).insert(pya.Box(110600, 223500, 112600, 237000))
     top.shapes(L_TM1).insert(pya.Box(92000, 235000, 112600, 237000))
@@ -319,6 +327,57 @@ def build_fully_wired_lna():
     top.shapes(L_TM1).insert(pya.Box(92000, 362000, 146900, 364000))
     top.shapes(L_TM1).insert(pya.Box(144900, 362000, 146900, 371000))
     top.shapes(L_TM1_TEXT).insert(pya.Text("N_IN", pya.Trans(93000, 280000)))
+
+    # Connect N_IN south to Csh1 PLUS plate:
+    # N_IN originates at Cin MINUS plate (111600, 223500) on TM1.
+    # Route south from (111600, 223500) to y = 208000:
+    top.shapes(L_TM1).insert(pya.Box(110600, 207000, 112600, 224500))
+    # Route west at y = 208000 (well below RFIN at y = 223500) to x = 89000:
+    top.shapes(L_TM1).insert(pya.Box(88000, 207000, 112600, 209000))
+    # Route south from y = 209000 down to Csh1 PLUS plate (y = 197000..200000):
+    top.shapes(L_TM1).insert(pya.Box(88000, 197000, 90000, 209000))
+    # Full-height stub into Csh1 PLUS pin:
+    top.shapes(L_TM1).insert(pya.Box(88000, 197000, 96000, 200000))
+
+    # --- NET: N_S1 (Csh1 MINUS plate -> Csh2 PLUS plate) ---
+    stack_m5_to_tm1(111600, 198500)
+    top.shapes(L_TM1).insert(pya.Box(110600, 183000, 112600, 199500))
+    top.shapes(L_TM1).insert(pya.Box(88000, 183000, 112600, 185000))
+    top.shapes(L_TM1).insert(pya.Box(88000, 172000, 90000, 185000))
+    top.shapes(L_TM1).insert(pya.Box(88000, 172000, 96000, 175000))
+    top.shapes(L_TM1_TEXT).insert(pya.Text("N_S1", pya.Trans(102000, 184000)))
+
+    # --- NET: N_S2 (Csh2 MINUS plate -> Csh3 PLUS plate) ---
+    stack_m5_to_tm1(111600, 173500)
+    top.shapes(L_TM1).insert(pya.Box(110600, 158000, 112600, 174500))
+    top.shapes(L_TM1).insert(pya.Box(88000, 158000, 112600, 160000))
+    top.shapes(L_TM1).insert(pya.Box(88000, 147000, 90000, 160000))
+    top.shapes(L_TM1).insert(pya.Box(88000, 147000, 96000, 150000))
+    top.shapes(L_TM1_TEXT).insert(pya.Text("N_S2", pya.Trans(102000, 159000)))
+
+    # --- NET: N_S3 (Csh3 MINUS plate -> Csh4 PLUS plate) ---
+    stack_m5_to_tm1(111600, 148500)
+    top.shapes(L_TM1).insert(pya.Box(110600, 133000, 112600, 149500))
+    top.shapes(L_TM1).insert(pya.Box(88000, 133000, 112600, 135000))
+    top.shapes(L_TM1).insert(pya.Box(88000, 122000, 90000, 135000))
+    top.shapes(L_TM1).insert(pya.Box(88000, 122000, 96000, 125000))
+    top.shapes(L_TM1_TEXT).insert(pya.Text("N_S3", pya.Trans(102000, 134000)))
+
+    # --- Csh4 MINUS plate to GND ---
+    # Csh4 MINUS plate is at (111600, 123500).
+    # Route east to x = 125000, then south to bottom ground bus (y = 50000):
+    stack_m5_to_tm1(111600, 123500)
+    top.shapes(L_TM1).insert(pya.Box(110600, 122500, 126000, 124500))
+    top.shapes(L_TM1).insert(pya.Box(124000, 50000, 126000, 124500))
+
+    # Substrate ground ties for Cin and Csh1-Csh4:
+    top.shapes(L_M1).insert(pya.Box(113500, 50000, 114500, 220000))
+    top.shapes(L_M1).insert(pya.Box(95000, 215000, 114500, 216000))
+    top.shapes(L_M1).insert(pya.Box(95000, 190000, 114500, 191000))
+    top.shapes(L_M1).insert(pya.Box(95000, 165000, 114500, 166000))
+    top.shapes(L_M1).insert(pya.Box(95000, 140000, 114500, 141000))
+    top.shapes(L_M1).insert(pya.Box(95000, 115000, 114500, 116000))
+    stack_m1_to_tm1(114000, 50000)
 
     # --- NET: N_L1 (Lg0 LB -> Lg1 LA) ---
     top.shapes(L_TM1).insert(pya.Box(153100, 362000, 155100, 371000))
@@ -575,7 +634,7 @@ def build_fully_wired_lna():
     L_TM1_FILL = ly.layer(126, 22)
     L_TM2_FILL = ly.layer(134, 22)
 
-    for x in list(range(95000, 205000, 10000)) + list(range(305000, 420000, 10000)):
+    for x in [px for px in list(range(95000, 205000, 10000)) + list(range(305000, 420000, 10000)) if px not in [115000, 125000]]:
         for y in range(65000, 80000, 10000):
             top.shapes(L_TM1_FILL).insert(pya.Box(x, y, x + 5000, y + 5000))
             top.shapes(L_TM2_FILL).insert(pya.Box(x, y, x + 5000, y + 5000))

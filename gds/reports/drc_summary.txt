@@ -8,8 +8,8 @@ DRC Rule Deck    : ihp-sg13g2.drc
 Layout GDS       : D:\Smacd Hackathon\gds\lna_top.gds
 Die Size         : 800 um x 550 um (0.44 mm^2 <= 5.0 mm^2 limit)
 Total Violations : 0
-Execution Time   : 9.8 seconds
-Timestamp (UTC)  : 2026-11-16T16:37:24.139615+00:00
+Execution Time   : 4.6 seconds
+Timestamp (UTC)  : 2026-11-17T02:24:25.518084+00:00
 --------------------------------------------------------------------------------
 DRC Results Summary:
   [PASS] 0 Violations found across all active, passive, and BEOL rules.

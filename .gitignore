@@ -9,6 +9,7 @@ ihp_pdk/
 # SPICE raw simulation dumps
 *.raw
 *.log
+/*.spice
 
 # OS generated
 .DS_Store
