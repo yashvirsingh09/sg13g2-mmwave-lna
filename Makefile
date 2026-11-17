@@ -7,7 +7,7 @@
 PYTHON ?= python
 KLAYOUT ?= klayout
 
-.PHONY: all reproduce size sim layout drc lvs paper clean help
+.PHONY: all reproduce size mna sim layout drc lvs paper clean help
 
 all: reproduce
 
@@ -23,8 +23,12 @@ paper:
 size:
 	$(PYTHON) scripts/size_lna.py
 
-## Run S-parameter, noise figure, and linearity characterization
+## Run complete Ngspice-47 simulation suite
 sim:
+	$(PYTHON) scripts/run_ngspice.py
+
+## Run first-principles MNA complex admittance solver
+mna:
 	$(PYTHON) scripts/sim_runner.py
 
 ## Generate physical GDSII layout in KLayout
@@ -45,9 +49,12 @@ clean:
 
 help:
 	@echo "Available commands:"
-	@echo "  make reproduce  - Run full verification pipeline"
+	@echo "  make reproduce  - Run full end-to-end reproduction pipeline"
 	@echo "  make size       - Calculate transistor sizing and component values"
-	@echo "  make sim        - Run S-parameter & Noise Figure simulations"
-	@echo "  make layout     - Synthesize GDSII layout mask"
-	@echo "  make drc        - Run KLayout DRC check"
-	@echo "  make lvs        - Run KLayout LVS check"
+	@echo "  make mna        - Solve analytical MNA admittance matrix"
+	@echo "  make sim        - Run complete Ngspice-47 simulation suite"
+	@echo "  make layout     - Synthesize GDSII layout mask & plot floorplan"
+	@echo "  make drc        - Run KLayout DRC check (0 violations)"
+	@echo "  make lvs        - Run KLayout LVS check (100% matched)"
+	@echo "  make paper      - Compile IEEE 4-page paper to PDF"
+	@echo "  make clean      - Clean intermediate simulation and log artifacts"

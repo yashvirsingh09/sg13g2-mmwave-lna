@@ -2,18 +2,34 @@
 ================================================================================
 SMACD 2027: Authentic Ngspice Multi-Corner PVT Runner
 Executes TT, FF (hbt_bcs), and SS (hbt_wcs) corners against IHP SG13G2 PDK models
-on the 100% Extracted Physical Layout Netlist (gds/reports/lna_top_extracted.cir).
+on the 100% Extracted Physical Layout Netlist (gds/reports/lna_top_extracted.cir)
+Self-biased cascodes (no phantom external DC supplies)
 SPDX-License-Identifier: Apache-2.0
 ================================================================================
 """
 
 import os
 import sys
+import shutil
 import subprocess
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+
+def find_ngspice():
+    candidates = [
+        r"C:\Spice64\bin\ngspice_con.exe",
+        r"C:\Program Files\Spice64\bin\ngspice_con.exe",
+        r"C:\Spice\bin\ngspice.exe",
+    ]
+    for c in candidates:
+        if os.path.isfile(c):
+            return c
+    which = shutil.which("ngspice") or shutil.which("ngspice_con")
+    if which:
+        return which
+    return "ngspice"
 
 pdk_hbt = os.path.abspath('ihp_pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerHBT.lib').replace('\\', '/')
 pdk_cap = os.path.abspath('ihp_pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerCAP.lib').replace('\\', '/')
@@ -58,9 +74,9 @@ inst_pins = []
 for p in subckt_pins:
     if p == 'GND':
         inst_pins.append('0')
-    elif p in ['RFIN', 'RFOUT', 'VBIAS1', 'VBIAS2', 'VB_CAS1', 'VB_CAS2']:
+    elif p in ['RFIN', 'RFOUT', 'VBIAS1', 'VBIAS2']:
         inst_pins.append(p)
-    elif p == 'LB|VCC':
+    elif p in ['VCC', 'LB|VCC', 'LB,VCC']:
         inst_pins.append('VCC')
     else:
         clean_name = 'n_' + p.lower().replace('|', '_').replace('$', '_')
@@ -114,8 +130,6 @@ Cp 1 3 2.0f
 {xdut_line}
 
 VCC VCC 0 DC {ccfg['vcc']}
-V_CAS1 VB_CAS1 0 DC {min(1.75, ccfg['vcc'] - 0.05)}
-V_CAS2 VB_CAS2 0 DC {min(1.75, ccfg['vcc'] - 0.05)}
 V_B1 VBIAS1 0 DC 0.900
 V_B2 VBIAS2 0 DC 0.890
 
@@ -139,12 +153,14 @@ quit
     with open('temp_corner.spice', 'w') as f:
         f.write(spice_deck)
 
-    res = subprocess.run([r'C:\Spice64\bin\ngspice_con.exe', '-b', 'temp_corner.spice'], capture_output=True, text=True)
+    ngspice_bin = find_ngspice()
+    res = subprocess.run([ngspice_bin, '-b', 'temp_corner.spice'], capture_output=True, text=True)
 
     # Parse ASCII raw file
     freqs, s21, s11 = [], [], []
     with open('corner_sim.raw', 'r') as f:
         lines = f.readlines()
+    val_idx = 0
     for i, line in enumerate(lines):
         if line.startswith('Values:'):
             val_idx = i + 1

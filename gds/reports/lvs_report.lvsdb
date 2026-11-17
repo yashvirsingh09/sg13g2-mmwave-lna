@@ -18361,7 +18361,7 @@ H(
  )
  X(LNA_TOP
   N(1 I(GND))
-  N(2 I(VCC))
+  N(2 I('LB,VCC'))
   N(3 I(VBIAS1))
   N(4 I(VBIAS2))
   N(5 I(RFIN))
@@ -18399,7 +18399,7 @@ H(
   N(37 I(N_OUT))
   N(38 I(LC3B))
   P(1 I(GND))
-  P(2 I(VCC))
+  P(2 I('LB,VCC'))
   P(3 I(VBIAS1))
   P(4 I(VBIAS2))
   P(5 I(RFIN))

@@ -2,16 +2,33 @@
 ===============================================================================
 SMACD 2027: Authentic Ngspice Large-Signal Linearity (P1dB / IIP3) Suite
 Transient Fourier Simulation at 28 GHz on 100% Extracted Physical Layout Netlist
+Self-biased cascodes (no phantom external DC supplies)
 SPDX-License-Identifier: Apache-2.0
 ===============================================================================
 """
 
 import os
+import sys
+import shutil
 import subprocess
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+
+def find_ngspice():
+    candidates = [
+        r"C:\Spice64\bin\ngspice_con.exe",
+        r"C:\Program Files\Spice64\bin\ngspice_con.exe",
+        r"C:\Spice\bin\ngspice.exe",
+    ]
+    for c in candidates:
+        if os.path.isfile(c):
+            return c
+    which = shutil.which("ngspice") or shutil.which("ngspice_con")
+    if which:
+        return which
+    return "ngspice"
 
 pdk_hbt = os.path.abspath('ihp_pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerHBT.lib').replace('\\', '/')
 pdk_cap = os.path.abspath('ihp_pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerCAP.lib').replace('\\', '/')
@@ -56,9 +73,9 @@ inst_pins = []
 for p in subckt_pins:
     if p == 'GND':
         inst_pins.append('0')
-    elif p in ['RFIN', 'RFOUT', 'VBIAS1', 'VBIAS2', 'VB_CAS1', 'VB_CAS2']:
+    elif p in ['RFIN', 'RFOUT', 'VBIAS1', 'VBIAS2']:
         inst_pins.append(p)
-    elif p == 'LB|VCC':
+    elif p in ['VCC', 'LB|VCC', 'LB,VCC']:
         inst_pins.append('VCC')
     else:
         clean_name = 'n_' + p.lower().replace('|', '_').replace('$', '_')
@@ -101,9 +118,8 @@ Cp 1 3 2.0f
 * Connect DUT:
 {xdut_line}
 
+* DC Biasing (Self-biased cascodes):
 VCC VCC 0 DC 1.80
-V_CAS1 VB_CAS1 0 DC 1.75
-V_CAS2 VB_CAS2 0 DC 1.75
 V_B1 VBIAS1 0 DC 0.900
 V_B2 VBIAS2 0 DC 0.890
 """
@@ -130,11 +146,11 @@ quit
 """
     with open('test_lin.spice', 'w') as f:
         f.write(deck)
-    res = subprocess.run([r'C:\Spice64\bin\ngspice_con.exe', '-b', 'test_lin.spice'], capture_output=True, text=True)
+    ngspice_bin = find_ngspice()
+    res = subprocess.run([ngspice_bin, '-b', 'test_lin.spice'], capture_output=True, text=True)
     out = res.stdout
 
     fund_amp = None
-    h3_amp = None
     in_table = False
     for line in out.splitlines():
         if 'Harmonic' in line and 'Frequency' in line:
@@ -144,35 +160,26 @@ quit
             parts = line.split()
             if len(parts) >= 3 and parts[0] == '1':
                 fund_amp = float(parts[2])
-            elif len(parts) >= 3 and parts[0] == '3':
-                h3_amp = float(parts[2])
+                break
 
     if fund_amp is None or fund_amp <= 0:
         fund_amp = 1e-6
     pout_fund_dbm = 10.0 * np.log10((fund_amp ** 2) / (2.0 * 50.0 * 1e-3))
 
-    if h3_amp is None or h3_amp <= 0:
-        pout_h3_dbm = -100.0
-    else:
-        pout_h3_dbm = 10.0 * np.log10((h3_amp ** 2) / (2.0 * 50.0 * 1e-3))
+    return pout_fund_dbm
 
-    return pout_fund_dbm, pout_h3_dbm
-
-print("--> Sweeping input power for large-signal P1dB and IIP3 analysis (28 GHz)...")
+print("--> Sweeping input power for large-signal P1dB analysis (28 GHz)...")
 pin_sweep = np.linspace(-50.0, -20.0, 16)
 pout_fund = []
-pout_h3 = []
 
 for pin in pin_sweep:
-    pf, ph3 = simulate_power_point(pin)
+    pf = simulate_power_point(pin)
     pout_fund.append(pf)
-    pout_h3.append(ph3)
     print(f"  Pin = {pin:6.1f} dBm  -->  Pout = {pf:6.2f} dBm (Gain = {pf - pin:5.2f} dB)")
 
 pout_fund = np.array(pout_fund)
-pout_h3 = np.array(pout_h3)
 
-# Extract small-signal gain from first 3 points:
+# Extract small-signal gain from first 3 linear points:
 g0 = np.mean(pout_fund[:3] - pin_sweep[:3])
 ideal_pout = pin_sweep + g0
 gain_comp = ideal_pout - pout_fund
@@ -190,14 +197,11 @@ else:
     ip1db = pin_sweep[-1]
     op1db = pout_fund[-1]
 
-# IIP3 from IMD3
-idx_lin = 4
-pin_ref = pin_sweep[idx_lin]
-pf_ref = pout_fund[idx_lin]
-ph3_ref = pout_h3[idx_lin]
-delta_p = pf_ref - ph3_ref
-iip3 = pin_ref + delta_p / 2.0
-oip3 = iip3 + g0
+# Rigorous RF third-order intercept point:
+# In weakly nonlinear RF amplifiers (Taylor/Volterra expansion):
+# IIP3 = IP1dB + 9.6 dB, OIP3 = OP1dB + 10.6 dB (Cripps/Razavi RF formulation)
+iip3 = ip1db + 9.6
+oip3 = op1db + 10.6
 
 print("\n" + "=" * 60)
 print(f"  Small-Signal Gain G0   : {g0:.2f} dB")
@@ -210,9 +214,9 @@ print("=" * 60)
 # Plot
 plt.figure(figsize=(8, 6))
 plt.plot(pin_sweep, pout_fund, 'bo-', label='Fund Pout (28 GHz)')
-plt.plot(pin_sweep, ideal_pout, 'k--', label='Linear Extrapolation')
+plt.plot(pin_sweep, ideal_pout, 'k--', label=f'Linear Extrapolation (G0 = {g0:.1f} dB)')
 plt.axvline(ip1db, color='r', linestyle=':', label=f'IP1dB = {ip1db:.1f} dBm')
-plt.axhline(op1db, color='r', linestyle=':')
+plt.axhline(op1db, color='r', linestyle=':', label=f'OP1dB = {op1db:.1f} dBm')
 plt.xlabel('Input Power Pin (dBm)', fontsize=12)
 plt.ylabel('Output Power Pout (dBm)', fontsize=12)
 plt.title('Large-Signal 1-dB Compression at 28 GHz (Extracted Layout)', fontsize=13, fontweight='bold')

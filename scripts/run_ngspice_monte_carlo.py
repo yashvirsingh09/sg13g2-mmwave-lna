@@ -7,17 +7,33 @@ Performs 30-run statistical analysis with physical PDK component tolerances:
 - Poly Resistors: +/- 15% (3-sigma normal)
 - Base Bias Voltage: +/- 10 mV (3-sigma normal)
 Simulates the 100% Extracted Physical Layout Netlist (gds/reports/lna_top_extracted.cir)
+Self-biased cascodes (no phantom external DC supplies)
 SPDX-License-Identifier: Apache-2.0
 ================================================================================
 """
 
 import os
 import sys
+import shutil
 import subprocess
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+
+def find_ngspice():
+    candidates = [
+        r"C:\Spice64\bin\ngspice_con.exe",
+        r"C:\Program Files\Spice64\bin\ngspice_con.exe",
+        r"C:\Spice\bin\ngspice.exe",
+    ]
+    for c in candidates:
+        if os.path.isfile(c):
+            return c
+    which = shutil.which("ngspice") or shutil.which("ngspice_con")
+    if which:
+        return which
+    return "ngspice"
 
 pdk_hbt = os.path.abspath('ihp_pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerHBT.lib').replace('\\', '/')
 pdk_cap = os.path.abspath('ihp_pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerCAP.lib').replace('\\', '/')
@@ -62,9 +78,9 @@ inst_pins = []
 for p in subckt_pins:
     if p == 'GND':
         inst_pins.append('0')
-    elif p in ['RFIN', 'RFOUT', 'VBIAS1', 'VBIAS2', 'VB_CAS1', 'VB_CAS2']:
+    elif p in ['RFIN', 'RFOUT', 'VBIAS1', 'VBIAS2']:
         inst_pins.append(p)
-    elif p == 'LB|VCC':
+    elif p in ['VCC', 'LB|VCC', 'LB,VCC']:
         inst_pins.append('VCC')
     else:
         clean_name = 'n_' + p.lower().replace('|', '_').replace('$', '_')
@@ -119,8 +135,6 @@ Cp 1 3 2.0f
 {xdut_line}
 
 VCC VCC 0 DC 1.80
-V_CAS1 VB_CAS1 0 DC 1.75
-V_CAS2 VB_CAS2 0 DC 1.75
 V_B1 VBIAS1 0 DC {vb1:.4f}
 V_B2 VBIAS2 0 DC 0.890
 
@@ -142,11 +156,13 @@ quit
 """
     with open('test_mc.spice', 'w') as f:
         f.write(deck)
-    subprocess.run([r'C:\Spice64\bin\ngspice_con.exe', '-b', 'test_mc.spice'], capture_output=True, text=True)
+    ngspice_bin = find_ngspice()
+    subprocess.run([ngspice_bin, '-b', 'test_mc.spice'], capture_output=True, text=True)
 
     freqs, s21, s11 = [], [], []
     with open('mc_temp.raw', 'r') as f:
         lines = f.readlines()
+    val_idx = 0
     for i, line in enumerate(lines):
         if line.startswith('Values:'):
             val_idx = i + 1
@@ -171,54 +187,79 @@ quit
     return np.array(freqs), np.array(s21), np.array(s11)
 
 print("--> Executing 30-Run Monte Carlo Statistical Yield Analysis on Extracted Layout...")
-rng = np.random.RandomState(42)
-N_RUNS = 30
+rng = np.random.default_rng(42)
+
 all_s21_28 = []
 all_s11_28 = []
-mc_curves = []
+all_curves = []
 
-for idx in range(1, N_RUNS + 1):
-    f_arr, s21_arr, s11_arr = run_mc_iteration(idx, rng)
-    s21_val = s21_arr[80]
-    s11_val = s11_arr[80]
-    all_s21_28.append(s21_val)
-    all_s11_28.append(s11_val)
-    mc_curves.append((f_arr, s21_arr, s11_arr))
-    if idx % 5 == 0 or idx == 1:
-        print(f"  Run {idx:2d}/{N_RUNS}: S21(28G) = {s21_val:5.2f} dB, S11(28G) = {s11_val:6.2f} dB")
+for idx in range(1, 31):
+    f, s21, s11 = run_mc_iteration(idx, rng)
+    s21_28 = s21[80]
+    s11_28 = s11[80]
+    all_s21_28.append(s21_28)
+    all_s11_28.append(s11_28)
+    all_curves.append((f, s21, s11))
+    if idx in [1, 5, 10, 15, 20, 25, 30]:
+        print(f"  Run {idx:2d}/30: S21(28G) = {s21_28:5.2f} dB, S11(28G) = {s11_28:6.2f} dB")
 
 all_s21_28 = np.array(all_s21_28)
 all_s11_28 = np.array(all_s11_28)
 
-yield_count = np.sum((all_s21_28 >= 20.0) & (all_s11_28 < -10.0))
-yield_pct = 100.0 * yield_count / N_RUNS
+# Yield defined as S21 >= 20 dB and S11 < -10 dB
+passing = (all_s21_28 >= 20.0) & (all_s11_28 < -10.0)
+yield_pct = 100.0 * np.sum(passing) / len(passing)
 
 print("\n" + "=" * 60)
-print(f"  Monte Carlo Statistical Yield Results ({N_RUNS} Runs @ 28 GHz):")
+print("  Monte Carlo Statistical Yield Results (30 Runs @ 28 GHz):")
 print(f"  S21 Mean +/- Std: {np.mean(all_s21_28):.2f} +/- {np.std(all_s21_28):.2f} dB")
 print(f"  S11 Mean +/- Std: {np.mean(all_s11_28):.2f} +/- {np.std(all_s11_28):.2f} dB")
-print(f"  Yield (S21 >= 20 dB, S11 < -10 dB): {yield_count}/{N_RUNS} ({yield_pct:.1f}%)")
+print(f"  Yield (S21 >= 20 dB, S11 < -10 dB): {np.sum(passing)}/{len(passing)} ({yield_pct:.1f}%)")
 print("=" * 60)
 
-fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
-for f_arr, s21_arr, s11_arr in mc_curves:
-    ax1.plot(f_arr, s21_arr, color='green', alpha=0.35, linewidth=1)
-    ax2.plot(f_arr, s11_arr, color='navy', alpha=0.35, linewidth=1)
+fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(11, 8))
 
-ax1.axvline(28.0, color='gray', linestyle=':', label='28 GHz Target')
-ax1.axhline(20.0, color='red', linestyle='--', label='20 dB Gain Spec')
-ax1.set_ylabel('|S21| Gain (dB)', fontsize=12)
-ax1.set_title(f'30-Run Monte Carlo Statistical Yield Analysis (Yield: {yield_pct:.0f}%)', fontsize=14, fontweight='bold')
-ax1.grid(True, linestyle='--', alpha=0.6)
-ax1.legend(loc='lower left', fontsize=10)
+# Panel 1: S21 trajectories
+for f, s21, s11 in all_curves:
+    ax1.plot(f, s21, 'b-', alpha=0.25, linewidth=1.0)
+ax1.axvline(28.0, color='gray', linestyle=':')
+ax1.axhline(20.0, color='red', linestyle='--', label='20 dB Threshold')
+ax1.set_xlabel('Frequency (GHz)', fontsize=10)
+ax1.set_ylabel('|S21| Gain (dB)', fontsize=10)
+ax1.set_title('Gain Trajectories across Process Spread', fontsize=11, fontweight='bold')
+ax1.grid(True, linestyle='--', alpha=0.5)
+ax1.legend(loc='lower left', fontsize=9)
 
+# Panel 2: S11 trajectories
+for f, s21, s11 in all_curves:
+    ax2.plot(f, s11, 'r-', alpha=0.25, linewidth=1.0)
 ax2.axvline(28.0, color='gray', linestyle=':')
-ax2.axhline(-10.0, color='red', linestyle='--', label='-10 dB Return Loss Spec')
-ax2.set_xlabel('Frequency (GHz)', fontsize=12)
-ax2.set_ylabel('|S11| Return Loss (dB)', fontsize=12)
-ax2.set_xlim(20, 35)
-ax2.grid(True, linestyle='--', alpha=0.6)
-ax2.legend(loc='lower left', fontsize=10)
+ax2.axhline(-10.0, color='red', linestyle='--', label='-10 dB Match Threshold')
+ax2.set_xlabel('Frequency (GHz)', fontsize=10)
+ax2.set_ylabel('|S11| Return Loss (dB)', fontsize=10)
+ax2.set_title('Input Return Loss Trajectories', fontsize=11, fontweight='bold')
+ax2.grid(True, linestyle='--', alpha=0.5)
+ax2.legend(loc='lower left', fontsize=9)
+
+# Panel 3: S21 Histogram
+ax3.hist(all_s21_28, bins=8, color='#1976d2', edgecolor='black', alpha=0.75)
+ax3.axvline(np.mean(all_s21_28), color='darkblue', linestyle='-', linewidth=2, label=f'Mean = {np.mean(all_s21_28):.2f} dB')
+ax3.axvline(20.0, color='red', linestyle='--', label='Spec Min (20 dB)')
+ax3.set_xlabel('S21 @ 28 GHz (dB)', fontsize=10)
+ax3.set_ylabel('Number of Dies', fontsize=10)
+ax3.set_title('S21 Statistical Distribution', fontsize=11, fontweight='bold')
+ax3.grid(True, linestyle='--', alpha=0.5)
+ax3.legend(loc='upper left', fontsize=9)
+
+# Panel 4: S11 Histogram
+ax4.hist(all_s11_28, bins=8, color='#e53935', edgecolor='black', alpha=0.75)
+ax4.axvline(np.mean(all_s11_28), color='darkred', linestyle='-', linewidth=2, label=f'Mean = {np.mean(all_s11_28):.2f} dB')
+ax4.axvline(-10.0, color='black', linestyle='--', label='Spec Max (-10 dB)')
+ax4.set_xlabel('S11 @ 28 GHz (dB)', fontsize=10)
+ax4.set_ylabel('Number of Dies', fontsize=10)
+ax4.set_title(f'S11 Distribution (Yield = {yield_pct:.1f}%)', fontsize=11, fontweight='bold')
+ax4.grid(True, linestyle='--', alpha=0.5)
+ax4.legend(loc='upper right', fontsize=9)
 
 plt.tight_layout()
 os.makedirs('results', exist_ok=True)

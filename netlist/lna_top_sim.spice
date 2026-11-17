@@ -1,0 +1,70 @@
+* ==============================================================================
+* SMACD 2027 Open-Source Design Challenge
+* Circuit: Top-Level 24-28 GHz 2-Stage SiGe-BiCMOS Low-Noise Amplifier (Simulation Netlist)
+* Technology: IHP SG13G2 130nm SiGe BiCMOS (fT = 300 GHz)
+* SPDX-License-Identifier: Apache-2.0
+* ==============================================================================
+
+.subckt lna_top GND VCC VBIAS1 VBIAS2 RFIN RFOUT
+
+* --- Active HBT Transistors ---
+* Stage 1 Common-Emitter Q1 (Nx=2: parallel pair Q1A, Q1B):
+XQ1A CAS1_MID LB GND GND npn13G2 we=70n le=900n Nx=1
+XQ1B CAS1_MID LB GND GND npn13G2 we=70n le=900n Nx=1
+
+* Stage 1 Cascode Common-Base Q3 (Nx=2: parallel pair Q3A, Q3B):
+XQ3A OUT1 VB_CAS1 CAS1_MID GND npn13G2 we=70n le=900n Nx=1
+XQ3B OUT1 VB_CAS1 CAS1_MID GND npn13G2 we=70n le=900n Nx=1
+
+* Stage 2 Common-Emitter Q2 (Nx=1):
+XQ2 CAS2_MID B2 GND GND npn13G2 we=70n le=900n Nx=1
+
+* Stage 2 Cascode Common-Base Q4 (Nx=1):
+XQ4 OUT2 VB_CAS2 CAS2_MID GND npn13G2 we=70n le=900n Nx=1
+
+* --- Bias Resistors ---
+XR1 VBIAS1 LB GND rhigh w=0.5u l=0.96u
+XR2 VBIAS2 B2 GND rhigh w=0.5u l=0.96u
+XR3 VCC VB_CAS1 GND rhigh w=0.5u l=0.96u
+XR4 VCC VB_CAS2 GND rhigh w=0.5u l=0.96u
+
+* --- MIM Capacitors ---
+* Input DC Blocking:
+XC1 RFIN N_IN GND rfcmim w=7u l=7u wfeed=3u
+* Input Shunt Matching (4 series caps to GND):
+XC_SH1 N_IN N_S1 GND rfcmim w=7u l=7u wfeed=3u
+XC_SH2 N_S1 N_S2 GND rfcmim w=7u l=7u wfeed=3u
+XC_SH3 N_S2 N_S3 GND rfcmim w=7u l=7u wfeed=3u
+XC_SH4 N_S3 GND GND rfcmim w=7u l=7u wfeed=3u
+* Cascode Bypasses:
+XC2 VB_CAS1 GND GND rfcmim w=7u l=7u wfeed=3u
+XC3 VB_CAS2 GND GND rfcmim w=7u l=7u wfeed=3u
+* Interstage Tuning & Blocking:
+XC4 OUT1 GND GND rfcmim w=7u l=7u wfeed=3u
+XC5 OUT1 B2 GND rfcmim w=7u l=7u wfeed=3u
+* Output Tank Shunt (2 series caps):
+XC6 OUT2 N_CP GND rfcmim w=7u l=7u wfeed=3u
+XC7 N_CP GND GND rfcmim w=7u l=7u wfeed=3u
+* Output DC Blocking (3 series caps):
+XC8 OUT2 N_CO1 GND rfcmim w=7u l=7u wfeed=3u
+XC9 N_CO1 N_CO2 GND rfcmim w=7u l=7u wfeed=3u
+XC10 N_CO2 RFOUT GND rfcmim w=7u l=7u wfeed=3u
+
+* --- Spiral Inductors (inductor3 w=2u s=2.1u d=25.85u nr_r=2) ---
+* Input matching chain:
+XL1 N_IN LC1_0 N_L1 GND inductor3 w=2u s=2.1u d=25.85u nr_r=2
+XL2 N_L1 LC1_1 N_L2 GND inductor3 w=2u s=2.1u d=25.85u nr_r=2
+XL3 N_L2 LC1_2 N_L3 GND inductor3 w=2u s=2.1u d=25.85u nr_r=2
+XL4 N_L4 LC1_3 N_L3 GND inductor3 w=2u s=2.1u d=25.85u nr_r=2
+XL5 N_L5 LC1_4 N_L4 GND inductor3 w=2u s=2.1u d=25.85u nr_r=2
+XL6 LB LC1_5 N_L5 GND inductor3 w=2u s=2.1u d=25.85u nr_r=2
+
+* Interstage load:
+XL7 OUT1 LC2A N_INT GND inductor3 w=2u s=2.1u d=25.85u nr_r=2
+XL8 N_INT LC2B VCC GND inductor3 w=2u s=2.1u d=25.85u nr_r=2
+
+* Output load:
+XL9 OUT2 LC3A N_OUT GND inductor3 w=2u s=2.1u d=25.85u nr_r=2
+XL10 N_OUT LC3B VCC GND inductor3 w=2u s=2.1u d=25.85u nr_r=2
+
+.ends lna_top

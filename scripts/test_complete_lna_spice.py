@@ -2,13 +2,30 @@
 ================================================================================
 SMACD 2027: Authentic 4-Port S-Parameter & Noise Analysis in Ngspice-47
 Simulates the 100% Extracted Physical Layout Netlist (gds/reports/lna_top_extracted.cir)
+Self-biased cascodes (no phantom external cascode voltage supplies)
 SPDX-License-Identifier: Apache-2.0
 ================================================================================
 """
 
 import os
+import sys
+import shutil
 import subprocess
 import numpy as np
+
+def find_ngspice():
+    candidates = [
+        r"C:\Spice64\bin\ngspice_con.exe",
+        r"C:\Program Files\Spice64\bin\ngspice_con.exe",
+        r"C:\Spice\bin\ngspice.exe",
+    ]
+    for c in candidates:
+        if os.path.isfile(c):
+            return c
+    which = shutil.which("ngspice") or shutil.which("ngspice_con")
+    if which:
+        return which
+    return "ngspice"
 
 pdk_hbt = os.path.abspath('ihp_pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerHBT.lib').replace('\\', '/')
 pdk_cap = os.path.abspath('ihp_pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerCAP.lib').replace('\\', '/')
@@ -51,14 +68,14 @@ def run_simulation():
 
     dut_deck = '\n'.join(mod_lines)
 
-    # Build XDUT pin map
+    # Build XDUT pin map: ONLY real pads connect to external sources!
     inst_pins = []
     for p in subckt_pins:
         if p == 'GND':
             inst_pins.append('0')
-        elif p in ['RFIN', 'RFOUT', 'VBIAS1', 'VBIAS2', 'VB_CAS1', 'VB_CAS2']:
+        elif p in ['RFIN', 'RFOUT', 'VBIAS1', 'VBIAS2']:
             inst_pins.append(p)
-        elif p == 'LB|VCC':
+        elif p in ['VCC', 'LB|VCC', 'LB,VCC']:
             inst_pins.append('VCC')
         else:
             clean_name = 'n_' + p.lower().replace('|', '_').replace('$', '_')
@@ -101,10 +118,8 @@ Cp 1 3 2.0f
 * Connect DUT:
 {xdut_line}
 
-* DC Biasing:
+* DC Biasing (Authentic: Cascodes self-biased via on-chip resistors R3/R4 to VCC):
 VCC VCC 0 DC 1.80
-V_CAS1 VB_CAS1 0 DC 1.75
-V_CAS2 VB_CAS2 0 DC 1.75
 V_B1 VBIAS1 0 DC 0.900
 V_B2 VBIAS2 0 DC 0.890
 """
@@ -124,7 +139,7 @@ RL2 RFOUT 0 50.0
 .control
 set filetype=ascii
 op
-let pdc_mw = (-i(VCC) * 1.80 + -i(V_B1) * 0.900 + -i(V_B2) * 0.890 + -i(V_CAS1) * 1.75 + -i(V_CAS2) * 1.75) * 1e3
+let pdc_mw = (-i(VCC) * 1.80 + -i(V_B1) * 0.900 + -i(V_B2) * 0.890) * 1e3
 print pdc_mw
 
 run
@@ -146,7 +161,8 @@ quit
     with open('lna_sim_fwd.spice', 'w') as f:
         f.write(deck_fwd)
 
-    res_fwd = subprocess.run([r'C:\Spice64\bin\ngspice_con.exe', '-b', 'lna_sim_fwd.spice'], capture_output=True, text=True)
+    ngspice_bin = find_ngspice()
+    res_fwd = subprocess.run([ngspice_bin, '-b', 'lna_sim_fwd.spice'], capture_output=True, text=True)
 
     deck_rev = f"""* Complete 24-28 GHz LNA SPICE Simulation (Reverse: S22, S12)
 {base_deck}
@@ -174,11 +190,11 @@ quit
     with open('lna_sim_rev.spice', 'w') as f:
         f.write(deck_rev)
 
-    res_rev = subprocess.run([r'C:\Spice64\bin\ngspice_con.exe', '-b', 'lna_sim_rev.spice'], capture_output=True, text=True)
+    res_rev = subprocess.run([ngspice_bin, '-b', 'lna_sim_rev.spice'], capture_output=True, text=True)
 
     print("=" * 80)
     print("NGSPICE-47 RAW AC + NOISE SIMULATION OF 100% EXTRACTED GDS LAYOUT")
-    print("=" * 80)
+    print("================================================================================")
     for line in res_fwd.stdout.splitlines():
         if any(k in line for k in ['s21_db[80]', 's11_db[80]', 'nf_db[80]', 'pdc_mw']):
             print(" ", line.strip())

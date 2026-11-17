@@ -139,8 +139,7 @@ def run_lvs():
         "-rd", "topcell=lna_top",
         "-rd", f"report={report_file}",
         "-rd", f"schematic={schematic_file}",
-        "-rd", "disable_tap_extraction=true",
-        "-rd", "ignore_top_ports_mismatch=true"
+        "-rd", "disable_tap_extraction=true"
     ]
     
     start = datetime.now(timezone.utc)
@@ -184,10 +183,10 @@ def run_lvs():
         f"Timestamp (UTC): {datetime.now(timezone.utc).isoformat()}",
         "--------------------------------------------------------------------------------",
         "Extracted Primitive Devices in Physical Layout:",
-        f"  - SiGe HBTs (npn13G2)             : {npn_count} instances (Q1-Q4 RF cascodes, Q5-Q6 bias)",
-        f"  - Spiral Inductors (inductor3)    : {ind_count} instances (Lg1, Lint, Ld2 2-turn coils)",
-        f"  - RF MIM Capacitors (rfcmim)      : {cap_count} instances (Cin, Cint, Cout, Cbyp)",
-        f"  - Polysilicon Resistors (rhigh)   : {res_count} instances (Rbias1, Rbias2)",
+        f"  - SiGe HBTs (npn13G2)             : {npn_count} instances (Stage 1 & Stage 2 RF Cascodes)",
+        f"  - Spiral Inductors (inductor3)    : {ind_count} instances (Input, Interstage, and Output Coils)",
+        f"  - RF MIM Capacitors (rfcmim)      : {cap_count} instances (Matching, Bypass, Coupling, Tuning)",
+        f"  - Polysilicon Resistors (rhigh)   : {res_count} instances (Base & Cascode Bias Feeds)",
         "--------------------------------------------------------------------------------",
         f"Comparison Result: {'PASS (Netlists Match)' if is_match else 'FAIL (Mismatches Detected)'}",
         f"OVERALL STATUS: {'LVS CLEAN / ZERO MISMATCHES (LVS PASSED)' if is_match else 'LVS FAILED'}",

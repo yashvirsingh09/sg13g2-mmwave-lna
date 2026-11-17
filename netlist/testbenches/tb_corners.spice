@@ -4,48 +4,54 @@
 * SPDX-License-Identifier: Apache-2.0
 * ==============================================================================
 
-* Evaluates:
-* TT: Typical HBT (hbt_typ), VCC = 1.80V, Temp = 27 C
-* FF: Fast HBT (hbt_bcs), VCC = 1.98V, Temp = -40 C
-* SS: Slow HBT (hbt_wcs), VCC = 1.62V, Temp = 85 C
-
-.include ../lna_top.spice
+.include ../lna_top_sim.spice
 .include ihp_models_portable.spice
 
-VCC VCC 0 DC 1.8
-VGND GND 0 DC 0.0
+* Power Supply & DC Biasing (Cascodes self-biased via on-chip R3/R4 to VCC)
+VCC VCC 0 DC 1.80
+V_B1 VBIAS1 0 DC 0.900
+V_B2 VBIAS2 0 DC 0.890
 
-* Port 1 Drive (50 Ohm source with 2.0V AC, giving 1.0V incident wave)
+* Device Under Test (6-Port Interface: GND, VCC, VBIAS1, VBIAS2, RFIN, RFOUT)
+XDUT 0 VCC VBIAS1 VBIAS2 RFIN RFOUT lna_top
+
+* Port 1 Forward Drive: 2.0V AC source across 50 Ohm -> 1.0V incident wave
 VIN IN_SRC 0 DC 0 AC 2.0
-RS1 IN_SRC IN_PAD 50.0
+RS1 IN_SRC RFIN 50.0
 
-* Port 2 Termination (50 Ohm load)
-RL2 OUT_PAD 0 50.0
+* Port 2 Termination: 50 Ohm load
+RL2 RFOUT 0 50.0
 
-XDUT GND LA LA1 LA2 LB VCC LC LC1 LC2 IN_PAD OUT_PAD VCC VCC lna_top
-
-.ac dec 50 20g 35g
+.ac lin 151 20g 35g
 
 .control
-* TT Run (27 C, 1.8V)
+set filetype=ascii
+
+* TT Run (27 C, 1.80V)
 set temp = 27
 alter vcc = 1.80
 run
-let s21_tt = db(v(out_pad))
+setplot ac1
+let s21_tt = db(v(rfout))
+write tb_corners_tt.raw s21_tt
 
 * FF Run (-40 C, 1.98V)
 set temp = -40
 alter vcc = 1.98
 run
-let s21_ff = db(v(out_pad))
+setplot ac2
+let s21_ff = db(v(rfout))
+write tb_corners_ff.raw s21_ff
 
 * SS Run (85 C, 1.62V)
 set temp = 85
 alter vcc = 1.62
 run
-let s21_ss = db(v(out_pad))
+setplot ac3
+let s21_ss = db(v(rfout))
+write tb_corners_ss.raw s21_ss
 
-write tb_corners.raw s21_tt s21_ff s21_ss frequency
+print ac1.s21_tt[80] ac2.s21_ff[80] ac3.s21_ss[80]
 quit
 .endc
 

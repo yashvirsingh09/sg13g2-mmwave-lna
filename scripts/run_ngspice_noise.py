@@ -8,11 +8,26 @@ SPDX-License-Identifier: Apache-2.0
 
 import os
 import sys
+import shutil
 import subprocess
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+
+def find_ngspice():
+    candidates = [
+        r"C:\Spice64\bin\ngspice_con.exe",
+        r"C:\Program Files\Spice64\bin\ngspice_con.exe",
+        r"C:\Spice\bin\ngspice.exe",
+    ]
+    for c in candidates:
+        if os.path.isfile(c):
+            return c
+    which = shutil.which("ngspice") or shutil.which("ngspice_con")
+    if which:
+        return which
+    return "ngspice"
 
 pdk_hbt = os.path.abspath('ihp_pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerHBT.lib').replace('\\', '/')
 
@@ -103,7 +118,8 @@ def main():
     with open('noise_temp.spice', 'w') as f:
         f.write(spice_deck)
 
-    res = subprocess.run([r'C:\Spice64\bin\ngspice_con.exe', '-b', 'noise_temp.spice'], capture_output=True, text=True)
+    ngspice_bin = find_ngspice()
+    res = subprocess.run([ngspice_bin, '-b', 'noise_temp.spice'], capture_output=True, text=True)
     if res.returncode != 0:
         print(f"Error during noise analysis:\n{res.stderr}")
         return

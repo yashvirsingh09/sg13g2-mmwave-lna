@@ -4,33 +4,35 @@
 * SPDX-License-Identifier: Apache-2.0
 * ==============================================================================
 
-.include ../lna_top.spice
+.include ../lna_top_sim.spice
 .include ihp_models_portable.spice
 
-* Power Supply
-VCC VCC 0 DC 1.8
-VGND GND 0 DC 0.0
+* Power Supply & DC Biasing (Authentic: Cascodes self-biased via on-chip R3/R4 to VCC)
+VCC VCC 0 DC 1.80
+V_B1 VBIAS1 0 DC 0.900
+V_B2 VBIAS2 0 DC 0.890
 
-* Input 50-Ohm Source with Thermal Noise
-VIN IN_PAD 0 DC 0 AC 1.0
-R_SRC IN_PAD IN_DUT 50.0
+* Device Under Test (6-Port Interface: GND, VCC, VBIAS1, VBIAS2, RFIN, RFOUT)
+XDUT 0 VCC VBIAS1 VBIAS2 RFIN RFOUT lna_top
 
-* Device Under Test
-XDUT GND LA LA1 LA2 LB VCC LC LC1 LC2 IN_DUT OUT_PAD VCC VCC lna_top
+* Port 1 Input Drive: 50 Ohm source
+VIN IN_SRC 0 DC 0 AC 1.0
+RS1 IN_SRC RFIN 50.0
 
-* Output 50-Ohm Load
-R_LOAD OUT_PAD 0 50.0
+* Port 2 Termination: 50 Ohm load
+RL2 RFOUT 0 50.0
 
 * Noise Analysis (20 GHz to 35 GHz)
-.noise v(out_pad) VIN dec 50 20g 35g
+.noise v(RFOUT) VIN lin 151 20g 35g
 
 .control
+set filetype=ascii
 run
-* Noise Figure NF = 10 * log10(Total Output Noise / Output Noise from Source Resistor R_SRC)
-let gain_mag = abs(v(out_pad) / v(in_dut))
-let nf_db = 10 * log10(onoise_spectrum / (4 * 1.38e-23 * 300 * 50 * (gain_mag^2) + 1e-30))
-
-write tb_noise_figure.raw onoise_spectrum inoise_spectrum nf_db frequency
+setplot noise1
+let inoise_sq = inoise_spectrum * inoise_spectrum
+let nf_db = 10.0 * log10(inoise_sq / (4.0 * 1.380649e-23 * 290.0 * 50.0))
+write tb_noise_figure.raw nf_db inoise_spectrum onoise_spectrum
+print nf_db[80]
 quit
 .endc
 

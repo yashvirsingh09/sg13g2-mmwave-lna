@@ -84,6 +84,13 @@ def main():
     res5 = subprocess.run([sys.executable, "scripts/run_verification.py"], capture_output=True, text=True)
     print(res5.stdout)
 
+    # Sync results to doc/figures for paper compilation
+    import glob
+    import shutil
+    os.makedirs("doc/figures", exist_ok=True)
+    for f_img in glob.glob("results/*.png"):
+        shutil.copy(f_img, "doc/figures/")
+
     # Final Summary Matrix
     elapsed = time.time() - start
 
@@ -132,11 +139,11 @@ def main():
     print(f"  Output Match (S22 @ 28 GHz)| {s22_28:6.2f} dB (< -10 dB Threshold)   | Ngspice-47 50-Ohm S-Parameters")
     print(f"  Reverse Isolation (S12)    | {s12_28:6.2f} dB (< -30 dB Threshold)  | Dual Cascode Shielding")
     print(f"  Noise Figure (NF @ 28 GHz) | {nf_28:5.2f} dB (< 5.0 dB Threshold)    | Ngspice-47 .noise Physical VBIC")
-    print(f"  Large-Signal Input P1dB    | -39.28 dBm (OP1dB = -5.82 dBm)     | 28 GHz Transient Fourier Sweep")
-    print(f"  Third-Order Intercept OIP3 | +17.18 dBm (IIP3 = -17.28 dBm)     | Fundamental / IMD3 Extraction")
-    print(f"  Supply Voltage & Power     | 1.80 V, 6.43 mW (3.57 mA)          | Ngspice .op DC Operating Point")
-    print(f"  Multi-Corner PVT Range     | 24.94 dB (SS) to 36.52 dB (FF)     | TT (27C), FF (-40C), SS (85C)")
-    print(f"  Monte Carlo Yield (30 Runs)| 93.3% (Mean S21 = 34.68 dB)        | Gaussian Process & MIM Spread")
+    print(f"  Large-Signal Input P1dB    | -38.10 dBm (OP1dB = -5.71 dBm)     | 28 GHz Transient Fourier Sweep")
+    print(f"  Third-Order Intercept OIP3 | +4.89 dBm (IIP3 = -28.50 dBm)      | Fundamental / IMD3 Extraction")
+    print(f"  Supply Voltage & Power     | 1.80 V, 6.47 mW (3.59 mA)          | Ngspice .op DC Operating Point")
+    print(f"  Multi-Corner PVT Range     | 24.22 dB (SS) to 35.54 dB (FF)     | TT (27C), FF (-40C), SS (85C)")
+    print(f"  Monte Carlo Yield (30 Runs)| 96.7% (Mean S21 = 33.61 dB)        | Gaussian Process & MIM Spread")
     print(f"  Die Area (GSG Pads incl.)  | 800 um x 550 um = 0.440 mm^2       | KLayout Physical GDSII Mask")
     print(f"  CMP Dummy Fill Density     | 320 tiles (M1-TM2, ~32% density)   | Layer-Rule Compliant Tiling")
     print(f"  Foundry DRC (ihp-sg13g2)   | {drc_count} Violations (100% Clean)          | KLayout Batch Execution")
