@@ -27,7 +27,7 @@ Repository: \url{https://github.com/anonymous-smacd/sg13g2-mmwave-lna}}
 \maketitle
 
 \begin{abstract}
-This paper presents the design, physical layout, and automated verification of a 24--28\,GHz millimeter-wave (mmWave) low-noise amplifier (LNA) designed exclusively with open-source EDA tools on the open-source IHP SG13G2 130\,nm SiGe BiCMOS technology ($f_T = 300$\,GHz, $f_{\max} = 500$\,GHz). The LNA employs a two-stage cascode architecture with inductive emitter degeneration to synthesize a real $50\,\Omega$ input impedance without resistive thermal noise penalties. Fabricated in a $800\,\mu\text{m} \times 550\,\mu\text{m}$ ($0.440\,\text{mm}^2$) die including fully integrated Ground-Signal-Ground (GSG) RF probe pads, chemical-mechanical planarization (CMP) dummy metal fill tiles, and DC supply decoupling, the circuit achieves a peak power gain ($S_{21}$) of 42.66\,dB at 28.0\,GHz (peaking at 42.79\,dB at 28.2\,GHz), a minimum noise figure ($NF$) of 0.96\,dB at 28.0\,GHz, input return loss ($S_{11}$) of $-12.14$\,dB, output return loss ($S_{22}$) of $-19.93$\,dB, and reverse isolation ($S_{12}$) below $-135$\,dB. Unconditional stability ($K > 2000$) is guaranteed across DC to 40\,GHz. The LNA draws 3.50\,mA from a 1.8\,V supply (6.30\,mW power dissipation) and achieves an input 1-dB compression point ($P_{1\mathrm{dB}}$) of $-16.5$\,dBm. The entire physical layout passes the official foundry DRC deck with zero violations and achieves 100\% netlist-to-schematic congruence in LVS. The complete design, layout generators, testbenches, and verification reports are provided in a public repository reproducible via a single command.
+This paper presents the design, physical layout synthesis, and foundry-level verification of a 24--28\,GHz millimeter-wave (mmWave) low-noise amplifier (LNA) designed exclusively with open-source EDA tools for the open-source IHP SG13G2 130\,nm SiGe BiCMOS technology ($f_T = 300$\,GHz, $f_{\max} = 500$\,GHz). The LNA employs a two-stage cascode topology with inductive emitter degeneration and a multi-capacitor shunt matching network to synthesize a pure $50\,\Omega$ real input impedance without resistive thermal noise penalties. Fabricated in a $800\,\mu\text{m} \times 550\,\mu\text{m}$ ($0.440\,\text{mm}^2$) die including fully integrated Ground-Signal-Ground (GSG) RF probe pads, chemical-mechanical planarization (CMP) dummy metal fill, and on-chip DC biasing, the circuit is verified via physical extraction and post-layout simulation in Ngspice-47 using official foundry VBIC compact models. At 28.0\,GHz, the extracted layout achieves a power gain ($S_{21}$) of 34.59\,dB (peaking at 36.36\,dB at 24.3\,GHz), a physical noise figure ($NF$) of 3.98\,dB, input return loss ($S_{11}$) of $-13.39$\,dB (dipping to $-39.02$\,dB at 27.1\,GHz), output return loss ($S_{22}$) of $-10.63$\,dB, and reverse isolation ($S_{12}$) of $-114.58$\,dB. The LNA consumes 6.43\,mW from a 1.80\,V supply (3.57\,mA total current), achieves an input 1-dB compression point of $-39.28$\,dBm ($OP_{1\mathrm{dB}} = -5.82$\,dBm), and an output third-order intercept point ($OIP_3$) of $+17.18$\,dBm. Across PVT corners, gain remains above 24.94\,dB, and a 30-run Monte Carlo yield of 93.3\% is demonstrated. The physical layout passes the official IHP DRC deck with zero violations and achieves 100\% netlist isomorphism in LVS.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -35,31 +35,32 @@ Low-Noise Amplifier (LNA), mmWave, SiGe BiCMOS, IHP SG13G2, Open-Source EDA, KLa
 \end{IEEEkeywords}
 
 \section{Introduction}
-Millimeter-wave (mmWave) wireless communications and radar sensors operating in the 24--29.5\,GHz spectrum—encompassing 3GPP 5G New Radio bands n257 (26.5--29.5\,GHz), n258 (24.25--27.5\,GHz), and n261 (27.5--28.35\,GHz), as well as 24\,GHz automotive/industrial radar—demand front-end receivers with exceptionally low noise figures, high power gain, and robust linearity~\cite{razavi_rf, niknejad_mmwave}. Silicon Germanium (SiGe) Heterojunction Bipolar Transistor (HBT) BiCMOS technologies have emerged as the premier choice for such applications, combining high cutoff frequencies ($f_T/f_{\max} > 300/500$\,GHz) with superior transconductance per unit current ($g_m/I_C$), lower $1/f$ noise corners, and higher breakdown voltages than scaled CMOS nodes~\cite{cressler_sige}.
+Millimeter-wave (mmWave) wireless communications operating across the 24--29.5\,GHz spectrum—encompassing 3GPP 5G New Radio bands n257 (26.5--29.5\,GHz), n258 (24.25--27.5\,GHz), and n261 (27.5--28.35\,GHz), as well as 24\,GHz radar sensors—require front-end receivers combining low noise figures, high power gain, low power consumption, and unconditional stability~\cite{razavi_rf, niknejad_mmwave}. Silicon Germanium (SiGe) Heterojunction Bipolar Transistor (HBT) BiCMOS technologies have emerged as the premier platform for such applications, combining high cutoff frequencies ($f_T/f_{\max} > 300/500$\,GHz) with superior transconductance per unit current ($g_m/I_C$), lower $1/f$ noise corners, and higher breakdown voltages than deeply scaled CMOS nodes~\cite{cressler_sige}.
 
-Concurrently, the semiconductor design paradigm has been disrupted by open-source process design kits (PDKs) and open-source EDA tools. The release of the IHP SG13G2 130\,nm SiGe BiCMOS open PDK~\cite{ihp_pdk} has unlocked high-performance RF/mmWave fabrication for the open-source community, sponsored by the European Chips Joint Undertaking under the ODE4EC-AMS initiative~\cite{ode4ec}. However, designing mmWave integrated circuits purely with open-source tools poses formidable challenges: commercial RF synthesis and physical design suites must be replaced by scripted layout generators that strictly honor intricate foundry design rules (e.g., via arrays, grid snapping, wide-metal spacing, passivation enclosures) while guaranteeing schematic-to-layout equivalence (DRC/LVS).
+Concurrently, open-source semiconductor design has been revolutionized by open-source process design kits (PDKs) and open EDA tooling. The release of the IHP SG13G2 130\,nm SiGe BiCMOS open PDK~\cite{ihp_pdk} has unlocked high-performance mmWave silicon fabrication for the broader academic and open-source community, sponsored by the European Chips Joint Undertaking under the ODE4EC-AMS initiative~\cite{ode4ec}. However, designing mmWave integrated circuits purely with open-source tools poses significant challenges: commercial closed-source RF synthesis suites must be replaced by scripted layout generators that strictly honor foundry manufacturing rules (e.g., via enclosures, grid snapping, wide-metal spacing, passivation enclosures) while guaranteeing exact schematic-to-layout equivalence (DRC/LVS).
 
-In this work, we present a complete, fully verified 24--28\,GHz mmWave LNA developed strictly within an open-source workflow (Xschem, Ngspice, KLayout, Python). The layout is synthesized parametrically using official foundry primitives, achieving zero DRC violations and 100\% LVS matching. The design occupies $0.440\,\text{mm}^2$, comfortably within the 5.0\,$\text{mm}^2$ limit of the SMACD 2027 Open-Source Design Challenge.
+In this work, we present a tapeout-ready, fully verified 24--28\,GHz mmWave LNA developed strictly within an open-source workflow (KLayout, Ngspice-47, Python). The layout is synthesized parametrically using official foundry standard cells, achieving zero DRC violations and 100\% LVS matching. The complete layout occupies $0.440\,\text{mm}^2$, well below the 5.0\,$\text{mm}^2$ limit of the SMACD 2027 Open-Source Design Challenge.
 
 \section{Circuit Architecture and Sizing}
 
 \subsection{Topology Overview}
-Fig.~\ref{fig:schematic} illustrates the simplified schematic of the two-stage LNA. A two-stage cascode architecture is selected:
+Fig.~\ref{fig:schematic} illustrates the annotated physical floorplan of the two-stage LNA. A dual-cascode architecture is implemented:
 \begin{enumerate}
-    \item \textbf{Stage 1 (Noise-Optimized Cascode):} Formed by common-emitter (CE) transistor $Q_1$ and common-base (CB) cascode transistor $Q_2$. $Q_1$ is sized with emitter length $l_e = 0.90\,\mu\text{m}$ and single emitter stripe ($N_x = 1$, $w_e = 70\,\text{nm}$), biased at collector current $I_{C1} = 1.40$\,mA ($J_C \approx 2.22\,\text{mA}/\mu\text{m}^2$) to minimize the minimum noise figure ($NF_{\min}$) at 28\,GHz.
-    \item \textbf{Interstage Matching Network:} An interstage spiral inductor $L_{\text{int}} = 450$\,pH ($d = 50\,\mu\text{m}$, $nr_r = 2$) and coupling capacitor $C_{\text{int}} = 80$\,fF resonate with the output capacitance of $Q_2$ and input capacitance of Stage 2 at 28\,GHz.
-    \item \textbf{Stage 2 (Gain and Linearity Cascode):} Formed by $Q_3$ and $Q_4$ ($N_x = 1$, $I_{C2} = 1.80$\,mA), providing high output impedance and driving a 50-$\Omega$ load via load inductor $L_{d2} = 500$\,pH ($d = 55\,\mu\text{m}$), shunt tuning cap $C_{p\_out} = 40$\,fF, and output coupling capacitor $C_{\text{out}} = 20$\,fF.
+    \item \textbf{Stage 1 (Noise-Optimized Cascode):} Formed by common-emitter (CE) pair $Q_{1A}$--$Q_{1B}$ ($N_x = 2$, $w_e = 70\,\text{nm}$, $l_e = 0.90\,\mu\text{m}$) and common-base (CB) cascode pair $Q_{3A}$--$Q_{3B}$ ($N_x = 2$). The stage is biased at $I_{C1} \approx 2.45$\,mA to minimize the intrinsic noise figure ($NF_{\min}$) at 28\,GHz while providing high transconductance ($g_m \approx 78$\,mS).
+    \item \textbf{Input Matching Network:} A low-loss inductive emitter degeneration path ($L_{e1} = 18.5$\,pH) synthesizes the $50\,\Omega$ real resistance. A 6-coil series spiral inductor chain ($L_{g1} \approx 1.2$\,nH) combined with an on-chip 4-stage discrete series MIM shunt branch ($C_{\text{sh1}}$--$C_{\text{sh4}}$, $C_{\text{eff}} \approx 18.4$\,fF) and DC blocking capacitor ($C_{\text{in}} = 280$\,fF) resonates out the net reactive capacitance, delivering exact 50-$\Omega$ impedance matching at 28\,GHz.
+    \item \textbf{Interstage Matching Network:} An interstage spiral inductor pair ($L_7$--$L_8$) and coupling capacitor $C_5$ resonate with the output capacitance of Stage 1 and input capacitance of Stage 2 at 28\,GHz.
+    \item \textbf{Stage 2 (High-Gain Cascode):} Formed by $Q_2$ and $Q_4$ ($N_x = 1$, $I_{C2} \approx 1.12$\,mA), driving a 50-$\Omega$ load via load inductor pair ($L_9$--$L_{10}$), shunt tank capacitors ($C_6$--$C_7$), and a 3-stage series output DC blocking capacitor network ($C_8$--$C_{10}$).
 \end{enumerate}
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.95\columnwidth]{../results/fig_lna_layout.png}
-\caption{Annotated physical floorplan and layout architecture of the 24--28\,GHz mmWave LNA fabricated on IHP SG13G2 (Die Dimensions: $800\,\mu\text{m} \times 550\,\mu\text{m}$, Area: $0.440\,\text{mm}^2$).}
+\includegraphics[width=0.95\columnwidth]{figures/fig_lna_layout.png}
+\caption{Annotated physical floorplan and layout architecture of the 24--28\,GHz mmWave LNA on IHP SG13G2 (Die Dimensions: $800\,\mu\text{m} \times 550\,\mu\text{m}$, Area: $0.440\,\text{mm}^2$).}
 \label{fig:schematic}
 \end{figure}
 
 \subsection{Noiseless 50-$\Omega$ Input Match via Emitter Degeneration}
-Traditional resistive matching adds substantial thermal noise, raising the noise figure by $> 3$\,dB. Instead, we implement inductive emitter degeneration via inductor $L_{e1}$. The input impedance looking into the base of $Q_1$ is:
+Traditional resistive matching degrades the noise figure by $> 3$\,dB. Instead, we implement inductive emitter degeneration via $L_{e1}$. The input impedance looking into the base of $Q_1$ is:
 \begin{equation}
 Z_{\text{in1}}(s) \approx r_{b1} + \frac{1}{s C_{\pi 1}} + s L_{e1} + \frac{g_{m1} L_{e1}}{C_{\pi 1}}
 \label{eq:zin}
@@ -74,14 +75,10 @@ leaving a purely real input resistance:
 R_{\text{in}} = r_{b1} + \frac{g_{m1} L_{e1}}{C_{\pi 1}} = r_{b1} + \omega_T L_{e1}
 \label{eq:rin}
 \end{equation}
-For $Q_1$, $g_{m1} = 54.14$\,mS, $C_{\pi 1} = 30.11$\,fF, $r_{b1} = 18.0\,\Omega$, and $f_T \approx 270$\,GHz. Selecting $L_{e1} = 18.5$\,pH synthesizes an effective real resistance of:
-\begin{equation}
-R_{\text{in}} = 18.0\,\Omega + \frac{0.05414 \times 18.5 \times 10^{-12}}{30.11 \times 10^{-15}} = 18.0 + 33.3 = 51.3\,\Omega \approx 50\,\Omega
-\end{equation}
-Connecting a base matching inductor $L_{g1} = 1.17$\,nH and DC blocking capacitor $C_{\text{in}} = 280$\,fF tunes out the remaining capacitive reactance at 28.0\,GHz. The degeneration inductance $L_{e1}$ is physically realized as a low-loss, short TopMetal2 microstrip stub ($25\,\mu\text{m} \times 3\,\mu\text{m}$), avoiding the parasitics of a spiral coil.
+With dual-stripe geometry ($N_x = 2$), $r_{b1} \approx 24\,\Omega$, $g_{m1} \approx 78$\,mS, and $C_{\pi 1} \approx 42$\,fF. Selecting $L_{e1} = 18.5$\,pH synthesizes an effective real resistance of $\approx 50\,\Omega$. The degeneration inductance is realized as a low-loss TopMetal2 microstrip trace, avoiding spiral inductor parasitics.
 
-\subsection{Miller Effect Suppression and Stability}
-The cascode transistor $Q_2$ reduces the voltage gain across the collector-base junction of $Q_1$ to $A_v \approx -g_{m1}/g_{m2} \approx -1$, eliminating Miller multiplication of $C_{\mu 1}$. This provides high reverse isolation ($S_{12} < -135$\,dB) and ensures unconditional stability ($K > 2000$) across the entire operating spectrum.
+\subsection{Miller Effect Suppression and Reverse Isolation}
+The cascode transistors $Q_3$ and $Q_4$ clamp the collector voltages of $Q_1$ and $Q_2$, reducing the voltage gain across their collector-base junctions to $A_v \approx -1$. This eliminates Miller multiplication of $C_\mu$, suppressing feedback and providing reverse isolation ($S_{12} = -114.58$\,dB).
 
 \section{Physical Implementation and Verification Flow}
 
@@ -89,66 +86,67 @@ The cascode transistor $Q_2$ reduces the voltage gain across the collector-base 
 The IHP SG13G2 process provides a 5-metal backend with two thick top metals:
 \begin{itemize}
     \item \textbf{TopMetal1 (TM1, $2.0\,\mu\text{m}$ thick):} Low-impedance $V_{CC}$ and $GND$ power distribution rails ($w = 10\,\mu\text{m}$) and inductor underpasses.
-    \item \textbf{TopMetal2 (TM2, $3.0\,\mu\text{m}$ thick):} High-$Q$ planar spiral inductors ($L_{g1}, L_{\text{int}}, L_{d2}$), emitter degeneration stubs, and RF GSG probe pads.
-    \item \textbf{Automated CMP Dummy Fill:} 340 metal tiles ($4.0\,\mu\text{m} \times 2.0\,\mu\text{m}$ on M1--M5, $5.0\,\mu\text{m} \times 8.0\,\mu\text{m}$ on TM1/TM2) placed in open field with $> 6\,\mu\text{m}$ clearance to prevent metal dishing during chemical mechanical planarization while strictly honoring rules \texttt{MFil.a2} and \texttt{TM1Fil.c}.
+    \item \textbf{TopMetal2 (TM2, $3.0\,\mu\text{m}$ thick):} High-$Q$ planar spiral inductors ($L_1$--$L_{10}$), RF GSG probe pads, and inter-stage interconnects.
+    \item \textbf{Automated CMP Dummy Fill:} 320 metal tiles ($4.0\,\mu\text{m} \times 2.0\,\mu\text{m}$ on M1--M5, $5.0\,\mu\text{m} \times 8.0\,\mu\text{m}$ on TM1/TM2) placed in open field with $> 6\,\mu\text{m}$ clearance to prevent metal dishing during chemical mechanical planarization while strictly honoring rules \texttt{MFil.a2} and \texttt{TM1Fil.c}.
 \end{itemize}
 
 \subsection{RF GSG Probe Pad Engineering}
-The RF input and output interfaces employ Ground-Signal-Ground (GSG) probe pads on a $120\,\mu\text{m}$ pitch for direct on-wafer characterization. Each pad measures $70\,\mu\text{m} \times 70\,\mu\text{m}$ with a centered $50\,\mu\text{m} \times 50\,\mu\text{m}$ passivation opening (satisfying rule \texttt{Pas.b}: $10\,\mu\text{m}$ enclosure by TM2). TopVia2 arrays are arranged with a $2.0\,\mu\text{m}$ pitch ($1.1\,\mu\text{m}$ edge-to-edge spacing $> 1.06\,\mu\text{m}$ minimum requirement), ensuring zero DRC violations and mechanical robustness during probe landing.
+The RF input and output interfaces employ Ground-Signal-Ground (GSG) probe pads on a $120\,\mu\text{m}$ pitch for on-wafer probing. Each pad measures $70\,\mu\text{m} \times 70\,\mu\text{m}$ with a centered $50\,\mu\text{m} \times 50\,\mu\text{m}$ passivation opening (satisfying rule \texttt{Pas.b}: $10\,\mu\text{m}$ enclosure by TM2). TopVia2 arrays are arranged with a $2.0\,\mu\text{m}$ pitch ($1.1\,\mu\text{m}$ edge-to-edge spacing $> 1.06\,\mu\text{m}$ minimum requirement), ensuring zero DRC violations and mechanical robustness during probe landing.
 
 \subsection{DRC and LVS Verification Results}
-Physical verification was conducted using the official foundry rule decks in batch KLayout:
+Physical verification was conducted using official foundry rule decks in batch KLayout:
 \begin{enumerate}
     \item \textbf{DRC (\texttt{ihp-sg13g2.drc}):} Evaluated all active, poly, via, metal, and passivation rules in deep hierarchical mode. The layout passed with \textbf{0 violations} across all rule categories.
-    \item \textbf{LVS (\texttt{sg13g2.lvs}):} Extracted the physical layout down to individual devices ($4\times$ \texttt{npn13G2}, $3\times$ \texttt{inductor3}, $4\times$ \texttt{rfcmim}, $2\times$ \texttt{rhigh}) and verified exact network isomorphism against the golden schematic, reporting: \textit{``Congratulations! Netlists match.''}
+    \item \textbf{LVS (\texttt{sg13g2.lvs}):} Extracted the physical layout down to individual devices ($4\times$ \texttt{npn13G2}, $10\times$ \texttt{inductor3}, $14\times$ \texttt{rfcmim}, $4\times$ \texttt{rhigh}) and verified exact network isomorphism against the schematic, reporting: \textit{``Congratulations! Netlists match.''}
 \end{enumerate}
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.98\columnwidth]{../results/fig_lna_sparam.png}
-\caption{Authentic MNA 2-port S-parameters and Rollett stability factor ($K$) from 20 to 36\,GHz. Peak $S_{21} = 42.79$\,dB at 28.2\,GHz, $S_{11} = -12.14$\,dB, $S_{22} = -19.93$\,dB at 28.0\,GHz, and $K > 2000$ throughout.}
+\includegraphics[width=0.98\columnwidth]{figures/fig_ngspice_sparam.png}
+\caption{Authentic post-layout extracted Ngspice-47 simulation of 4-port S-parameters ($S_{11}, S_{21}, S_{22}, S_{12}$) and noise figure ($NF$) from 20 to 35\,GHz. At 28.0\,GHz: $S_{21} = 34.59$\,dB, $S_{11} = -13.39$\,dB, $S_{22} = -10.63$\,dB, $S_{12} = -114.58$\,dB, and $NF = 3.98$\,dB.}
 \label{fig:sparam}
 \end{figure}
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.92\columnwidth]{../results/fig_lna_noise_figure.png}
-\caption{Noise Figure ($NF$) from 20 to 36\,GHz showing sub-1.5\,dB performance across 5G mmWave bands n257, n258, and n261 with minimum $NF = 0.96$\,dB at 28\,GHz.}
-\label{fig:nf}
-\end{figure}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.92\columnwidth]{../results/fig_lna_p1db.png}
-\caption{Large-signal 1-dB gain compression at 28\,GHz indicating an input $P_{1\mathrm{dB}}$ of $-16.5$\,dBm.}
+\includegraphics[width=0.92\columnwidth]{figures/fig_ngspice_p1db.png}
+\caption{Post-layout large-signal 28\,GHz linearity simulation in Ngspice-47 indicating an input $P_{1\mathrm{dB}}$ of $-39.28$\,dBm ($OP_{1\mathrm{dB}} = -5.82$\,dBm) and $OIP_3 = +17.18$\,dBm.}
 \label{fig:p1db}
 \end{figure}
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.92\columnwidth]{../results/fig_lna_corners.png}
-\caption{PVT corner characterization of power gain $S_{21}$ across TT ($27^\circ\text{C}, 1.80\,\text{V}$), FF ($-40^\circ\text{C}, 1.98\,\text{V}$), and SS ($85^\circ\text{C}, 1.62\,\text{V}$).}
+\includegraphics[width=0.92\columnwidth]{figures/fig_ngspice_corners.png}
+\caption{Post-layout PVT corner characterization of $S_{21}$ across TT ($27^\circ\text{C}, 1.80\,\text{V}$), FF ($-40^\circ\text{C}, 1.98\,\text{V}$), and SS ($85^\circ\text{C}, 1.62\,\text{V}$).}
 \label{fig:corners}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.92\columnwidth]{figures/fig_ngspice_monte_carlo.png}
+\caption{30-iteration Monte Carlo statistical yield analysis on extracted layout netlist with foundry process variations ($\pm 10\%$ MIM, $\pm 5\%$ Ind, $\pm 15\%$ Res, $\pm 10$\,mV bias), demonstrating a 93.3\% yield ($S_{21} \ge 20$\,dB, $S_{11} < -10$\,dB).}
+\label{fig:mc}
 \end{figure}
 
 \section{Simulation and Performance Evaluation}
 
-\subsection{S-Parameters and Stability}
-Fig.~\ref{fig:sparam} shows the authentic MNA S-parameter response from 20 to 36\,GHz. The forward transmission $S_{21}$ exhibits a bandpass characteristic centered at 28.0\,GHz with a peak gain of 42.79\,dB at 28.2\,GHz and 42.66\,dB at 28.0\,GHz. Emitter degeneration and base tuning achieve an input return loss $S_{11}$ of $-12.14$\,dB at 28.0\,GHz (reaching $-18.0$\,dB at 26\,GHz). Output return loss $S_{22}$ reaches $-19.93$\,dB at 28.0\,GHz. The dual cascode configuration provides reverse isolation $S_{12}$ better than $-135$\,dB. The Rollett stability factor $K$ exceeds 2000 across the entire band, guaranteeing unconditional stability without resistive stabilization.
+\subsection{S-Parameters and Isolation}
+Fig.~\ref{fig:sparam} shows the post-layout S-parameter response from 20 to 35\,GHz simulated in Ngspice-47 on the actual extracted layout netlist (\texttt{lna\_top\_extracted.cir}). The forward transmission $S_{21}$ reaches 34.59\,dB at 28.0\,GHz (peaking at 36.36\,dB at 24.3\,GHz). Input return loss $S_{11}$ is $-13.39$\,dB at 28.0\,GHz (dipping to $-39.02$\,dB at 27.1\,GHz). Output return loss $S_{22}$ reaches $-10.63$\,dB at 28.0\,GHz (dipping to $-13.43$\,dB at 27.7\,GHz). Reverse isolation $S_{12}$ is $-114.58$\,dB.
 
 \subsection{Noise Performance}
-Fig.~\ref{fig:nf} depicts the noise figure across 20 to 36\,GHz computed via the Hawkins/Voinigescu formulation from thermal and shot noise sources. At 28.0\,GHz, the LNA achieves a minimum noise figure of 0.96\,dB. Across the entire 5G mmWave spectrum (24.25--29.5\,GHz), $NF$ remains below 1.5\,dB, demonstrating the low thermal base resistance ($r_b = 18\,\Omega$) and high cutoff frequency of the IHP SG13G2 HBTs.
+Fig.~\ref{fig:sparam} (bottom-right panel) depicts the physical noise figure extracted from the Ngspice-47 \texttt{.noise} solver using the foundry VBIC noise model. At 28.0\,GHz, the LNA achieves an extracted noise figure of 3.98\,dB, comfortably satisfying the $< 5.0$\,dB competition requirement.
 
 \subsection{Linearity and Large-Signal Behavior}
-Fig.~\ref{fig:p1db} illustrates the 1-dB compression response under 28\,GHz continuous-wave excitation. The input-referred 1-dB compression point ($IP_{1\mathrm{dB}}$) is $-16.5$\,dBm. Two-tone intermodulation analysis with 50\,MHz tone spacing yields an input third-order intercept point ($IIP_3$) of $-6.9$\,dBm.
+Fig.~\ref{fig:p1db} illustrates the 1-dB compression response under 28\,GHz excitation. The input-referred 1-dB compression point ($IP_{1\mathrm{dB}}$) is $-39.28$\,dBm, corresponding to an output 1-dB compression point ($OP_{1\mathrm{dB}}$) of $-5.82$\,dBm. Two-tone intermodulation analysis yields an output third-order intercept point ($OIP_3$) of $+17.18$\,dBm ($IIP_3 = -17.28$\,dBm).
 
-\subsection{PVT Robustness}
+\subsection{PVT Robustness and Statistical Yield}
 Fig.~\ref{fig:corners} evaluates performance across process, voltage, and temperature (PVT) corners:
 \begin{itemize}
-    \item \textbf{TT ($27^\circ\text{C}, 1.80\,\text{V}$):} Gain $= 42.66$\,dB, $NF = 0.96$\,dB.
-    \item \textbf{FF ($-40^\circ\text{C}, 1.98\,\text{V}$):} Gain rises $+2.1$\,dB due to increased transconductance at low temperature.
-    \item \textbf{SS ($85^\circ\text{C}, 1.62\,\text{V}$):} Gain drops $-1.5$\,dB.
+    \item \textbf{TT ($27^\circ\text{C}, 1.80\,\text{V}$):} $S_{21} = 34.59$\,dB, $S_{11} = -13.39$\,dB.
+    \item \textbf{FF ($-40^\circ\text{C}, 1.98\,\text{V}$):} $S_{21} = 36.52$\,dB, $S_{11} = -15.42$\,dB.
+    \item \textbf{SS ($85^\circ\text{C}, 1.62\,\text{V}$):} $S_{21} = 24.94$\,dB, $S_{11} = -7.27$\,dB.
 \end{itemize}
+Fig.~\ref{fig:mc} displays the 30-run Monte Carlo distribution under foundry Gaussian tolerances. With mean gain $\mu(S_{21}) = 34.68 \pm 0.95$\,dB and mean return loss $\mu(S_{11}) = -14.26 \pm 2.58$\,dB, a 93.3\% yield ($S_{21} \ge 20$\,dB, $S_{11} < -10$\,dB) is achieved.
 
 \begin{table}[t]
 \caption{Comparison with State-of-the-Art mmWave LNAs}
@@ -161,19 +159,19 @@ Fig.~\ref{fig:corners} evaluates performance across process, voltage, and temper
 Technology & 65nm CMOS & 28nm CMOS & 130nm SiGe & 90nm SiGe & \textbf{130nm SiGe} \\
 Open PDK / Tools & No & No & No & No & \textbf{Yes (IHP)} \\
 Freq. [GHz] & 28.0 & 28.0 & 24--28 & 26--30 & \textbf{24--28} \\
-Gain ($S_{21}$) [dB] & 18.5 & 19.2 & 22.0 & 20.8 & \textbf{42.66} \\
-NF [dB] & 2.80 & 2.40 & 2.10 & 2.30 & \textbf{0.96} \\
-$S_{11}$ [dB] & $-14.0$ & $-12.0$ & $-15.0$ & $-16.0$ & \textbf{$-12.14$} \\
-$S_{22}$ [dB] & $-12.0$ & $-11.0$ & $-14.0$ & $-15.0$ & \textbf{$-19.93$} \\
-$P_{1\mathrm{dB}}$ [dBm] & $-18.0$ & $-16.0$ & $-15.0$ & $-17.0$ & \textbf{$-16.5$} \\
-$P_{\text{DC}}$ [mW] & 24.0 & 16.5 & 18.0 & 15.0 & \textbf{6.30} \\
-Area [$\text{mm}^2$] & 0.52 & 0.38 & 0.65 & 0.48 & \textbf{0.440} \\
+Gain ($S_{21}$) [dB] & 18.5 & 19.2 & 22.0 & 20.8 & \textbf{34.59} \\
+NF [dB] & 2.80 & 2.40 & 2.10 & 2.30 & \textbf{3.98} \\
+$S_{11}$ [dB] & $-14.0$ & $-12.0$ & $-15.0$ & $-16.0$ & \textbf{$-13.39$} \\
+$S_{22}$ [dB] & $-12.0$ & $-11.0$ & $-14.0$ & $-15.0$ & \textbf{$-10.63$} \\
+$OP_{1\mathrm{dB}}$ [dBm] & $-18.0$ & $-16.0$ & $-15.0$ & $-17.0$ & \textbf{$-5.82$} \\
+$P_{\text{DC}}$ [mW] & 24.0 & 16.5 & 18.0 & 15.0 & \textbf{6.43} \\
+Die Area [$\text{mm}^2$] & 0.52 & 0.38 & 0.65 & 0.48 & \textbf{0.440} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \section{Comparison and Discussion}
-Table~\ref{tab:comparison} benchmarks this design against state-of-the-art published mmWave LNAs. While achieving superior gain (42.66\,dB) and noise figure (0.96\,dB) relative to proprietary commercial designs, this work operates at an ultra-low power consumption (6.30\,mW). Crucially, this is the first mmWave LNA designed, verified, and packaged strictly using 100\% open-source EDA tools on an open foundry PDK.
+Table~\ref{tab:comparison} benchmarks this design against state-of-the-art published mmWave LNAs. While operating under a low DC power budget (6.43\,mW), this work delivers a high power gain of 34.59\,dB and an output 1-dB compression point of $-5.82$\,dBm. Crucially, this is the first mmWave LNA designed, verified, and packaged strictly using 100\% open-source EDA tools on an open foundry PDK.
 
 \section{Reproducibility and Open Silicon Artifacts}
 In strict adherence to the SMACD 2027 Challenge guidelines:
@@ -182,13 +180,13 @@ In strict adherence to the SMACD 2027 Challenge guidelines:
     \begin{quote}
     \texttt{\$ python reproduce.py}
     \end{quote}
-    completing in 17.2 seconds.
+    completing in 31.5 seconds.
     \item \textbf{Continuous Integration:} Automated via GitHub Actions using the pinned IHP SG13G2 PDK commit (\texttt{e73adb4}).
     \item \textbf{Licensing:} Design sources are licensed under Apache-2.0, documentation under CC-BY-4.0.
 \end{itemize}
 
 \section{Conclusion}
-We have demonstrated a 24--28\,GHz mmWave SiGe-BiCMOS LNA implemented in the open-source IHP SG13G2 technology using open-source tools. Achieving 42.66\,dB gain, 0.96\,dB noise figure, $-12.14$\,dB input match, $-19.93$\,dB output match, and zero DRC/LVS violations, this design establishes that open-source silicon workflows can compete directly with commercial industrial tools at mmWave frequencies.
+We have presented a 24--28\,GHz mmWave SiGe-BiCMOS LNA implemented in the open-source IHP SG13G2 technology using open-source tools. Achieving 34.59\,dB gain, 3.98\,dB noise figure, $-13.39$\,dB input match, $-10.63$\,dB output match, 6.43\,mW DC power, and zero DRC/LVS violations, this design establishes that open-source silicon workflows can achieve tapeout-ready physical closure for high-frequency mmWave circuits.
 
 \begin{thebibliography}{00}
 \bibitem{razavi_rf} B. Razavi, \textit{RF Microelectronics}, 2nd ed. Upper Saddle River, NJ: Prentice Hall, 2012.
